@@ -1,7 +1,7 @@
 """This module lets decode data according to the Bencoding specification."""
 
 
-def decode(value):  # noqa: C901
+def decode(value, *, keytostr=False):   # noqa: C901
     """Return the decoded value."""
     if not isinstance(value, bytes):
         raise TypeError('object of type {0} cannot be decoded'.format(type(value)))
@@ -75,7 +75,12 @@ def decode(value):  # noqa: C901
             key = _decode_item()
             if not isinstance(key, bytes):
                 raise ValueError('unsupported key type {0}'.format(type(key)))
-            elif key in result:
+            if keytostr:
+                try:
+                    key = key.decode()
+                except UnicodeDecodeError:
+                    raise ValueError('not a UTF-8 key {0}'.format(key))
+            if key in result:
                 raise ValueError('duplicate key {0}'.format(key))
             result[key] = _decode_item()
 
