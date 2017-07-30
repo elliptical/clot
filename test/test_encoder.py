@@ -12,6 +12,13 @@ class EncodeTestCase(tcm.TestCase):
         (b'spam\x00',   b'5:spam\x00'),     # no special treatment for the terminating zero
         (b'1234567890', b'10:1234567890'),  # length is base 10
 
+        # Strings (encoded as UTF-8 bytes)
+        ('',            b'0:'),
+        ('spam\x00',    b'5:spam\x00'),
+        ('1234567890',  b'10:1234567890'),
+
+        ('\N{PILE OF POO}', b'4:\xF0\x9F\x92\xA9'),     # single character with 4-byte long UTF-8
+
         # Integers
         (0,     b'i0e'),
         (1,     b'i1e'),
@@ -45,7 +52,6 @@ class EncodeTestCase(tcm.TestCase):
 
     @tcm.values(
         None,
-        str(),
         bytearray(),
         1.2,
         3j,

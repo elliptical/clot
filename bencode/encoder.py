@@ -56,6 +56,11 @@ def _encode_bool(value):
     yield b'e'
 
 
+@iterencode.register(str)
+def _encode_str(value):
+    yield from _encode_bytes(value.encode())
+
+
 @iterencode.register(tuple)
 @iterencode.register(list)
 def _encode_list(values):
