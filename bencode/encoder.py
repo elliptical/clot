@@ -8,12 +8,12 @@ import sys
 _USE_BYTES_INTERPOLATION = sys.version_info >= (3, 5)
 
 
-def encode(value):
+def encode(value, *, strict=False):
     """Return the encoded value or raise an error on unsupported types."""
-    return b''.join(iterencode(value))
+    return b''.join(iterencode(value, strict=strict))
 
 
-def iterencode(value):  # noqa: C901
+def iterencode(value, *, strict=False):     # noqa: C901
     """Yield bencoding parts for the value or raise an error on unsupported types."""
     @functools.singledispatch
     def func(value):    # pylint:disable=missing-docstring
@@ -54,11 +54,6 @@ def iterencode(value):  # noqa: C901
         yield b'1' if value else b'0'
         yield b'e'
 
-    @func.register(str)
-    def _encode_str(value):         # pylint:disable=unused-variable
-        yield from _encode_bytes(value.encode())
-
-    @func.register(tuple)
     @func.register(list)
     def _encode_list(values):       # pylint:disable=unused-variable
         yield b'l'
@@ -84,11 +79,15 @@ def iterencode(value):  # noqa: C901
             # For consistency in error reporting, let bytes go before str
             # in case of duplicate keys.  The error message will refer to
             # the str key then.
-            if isinstance(key, str):
-                yield key.encode(), 1, value, key
-            elif isinstance(key, bytes):
+            if isinstance(key, bytes):
                 yield key, 0, value, key
+            elif not strict and isinstance(key, str):
+                yield key.encode(), 1, value, key
             else:
                 raise TypeError('invalid key type {0}'.format(type(key)))
+
+    if not strict:
+        func.register(str, lambda x: _encode_bytes(x.encode()))
+        func.register(tuple, _encode_list)
 
     yield from func(value)

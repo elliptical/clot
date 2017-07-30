@@ -39,11 +39,11 @@ class EncodeTestCase(tcm.TestCase):
 
         # Tuples (encoded as lists)
         ((),                    b'le'),
-        ((b'spam', b'eggs'),    b'l4:spam4:eggse'),
+        ((b'spam', 'eggs'),     b'l4:spam4:eggse'),
 
         # Dictionaries
         ({},                                    b'de'),
-        ({b'cow': b'moo', 'spam': b'eggs'},     b'd3:cow3:moo4:spam4:eggse'),
+        ({b'cow': 'moo', 'spam': b'eggs'},      b'd3:cow3:moo4:spam4:eggse'),
         ({b'cow': [b'moo'], 'answer': 42},      b'd6:answeri42e3:cowl3:mooee'),
     )
     def test_good_values_are_encoded(self, value, expected_result):
@@ -63,12 +63,31 @@ class EncodeTestCase(tcm.TestCase):
         self.assertIn('cannot be encoded', message)
 
     @tcm.values(
+        tuple(),
+        str(),
+    )
+    def test_bad_values_will_raise_in_strict_mode(self, value):
+        with self.assertRaises(TypeError) as outcome:
+            bencode.encode(value, strict=True)
+        message = outcome.exception.args[0]
+        self.assertIn('cannot be encoded', message)
+
+    @tcm.values(
         {None: 'x'},
         {10: 'x'},
     )
     def test_bad_keys_will_raise(self, value):
         with self.assertRaises(TypeError) as outcome:
             bencode.encode(value)
+        message = outcome.exception.args[0]
+        self.assertIn('key type', message)
+
+    @tcm.values(
+        {'x': 1},
+    )
+    def test_bad_keys_will_raise_in_strict_mode(self, value):
+        with self.assertRaises(TypeError) as outcome:
+            bencode.encode(value, strict=True)
         message = outcome.exception.args[0]
         self.assertIn('key type', message)
 
