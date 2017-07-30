@@ -2,6 +2,10 @@
 
 
 import functools
+import sys
+
+
+_USE_BYTES_INTERPOLATION = sys.version_info >= (3, 5)
 
 
 def encode(value):
@@ -15,20 +19,34 @@ def iterencode(value):
     raise TypeError('object of type {0} cannot be encoded'.format(type(value)))
 
 
-@iterencode.register(bytes)
-def _encode_bytes(value):
-    value_length = len(value)
-    yield str(value_length).encode('ascii')
-    yield b':'
-    if value_length > 0:
-        yield value
+if _USE_BYTES_INTERPOLATION:
+    @iterencode.register(bytes)
+    def _encode_bytes(value):
+        value_length = len(value)
+        yield b'%d' % value_length
+        yield b':'
+        if value_length > 0:
+            yield value
 
+    @iterencode.register(int)
+    def _encode_int(value):
+        yield b'i'
+        yield b'%d' % value
+        yield b'e'
+else:   # pragma: no cover (because we do not run code coverage with Python 3.4)
+    @iterencode.register(bytes)
+    def _encode_bytes(value):
+        value_length = len(value)
+        yield str(value_length).encode('ascii')
+        yield b':'
+        if value_length > 0:
+            yield value
 
-@iterencode.register(int)
-def _encode_int(value):
-    yield b'i'
-    yield str(value).encode('ascii')
-    yield b'e'
+    @iterencode.register(int)
+    def _encode_int(value):
+        yield b'i'
+        yield str(value).encode('ascii')
+        yield b'e'
 
 
 @iterencode.register(bool)
