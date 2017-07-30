@@ -82,6 +82,9 @@ def _encode_dict(values):
 def _iter_dict_check_keys(values):
     """Yield (key, value) pairs from a dict while ensuring keys being of bytes type."""
     for key, value in values.items():
-        if not isinstance(key, bytes):
+        if isinstance(key, str):
+            yield key.encode(), value
+        elif isinstance(key, bytes):
+            yield key, value
+        else:
             raise TypeError('invalid key type {0}'.format(type(key)))
-        yield key, value

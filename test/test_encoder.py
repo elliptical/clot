@@ -43,8 +43,8 @@ class EncodeTestCase(tcm.TestCase):
 
         # Dictionaries
         ({},                                    b'de'),
-        ({b'cow': b'moo', b'spam': b'eggs'},    b'd3:cow3:moo4:spam4:eggse'),
-        ({b'cow': [b'moo'], b'answer': 42},     b'd6:answeri42e3:cowl3:mooee'),
+        ({b'cow': b'moo', 'spam': b'eggs'},     b'd3:cow3:moo4:spam4:eggse'),
+        ({b'cow': [b'moo'], 'answer': 42},      b'd6:answeri42e3:cowl3:mooee'),
     )
     def test_good_values_are_encoded(self, value, expected_result):
         result = bencode.encode(value)
@@ -65,7 +65,6 @@ class EncodeTestCase(tcm.TestCase):
     @tcm.values(
         {None: 'x'},
         {10: 'x'},
-        {'x': 1},
     )
     def test_bad_keys_will_raise(self, value):
         with self.assertRaises(TypeError) as outcome:
