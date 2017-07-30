@@ -56,6 +56,7 @@ def _encode_bool(value):
     yield b'e'
 
 
+@iterencode.register(tuple)
 @iterencode.register(list)
 def _encode_list(values):
     yield b'l'

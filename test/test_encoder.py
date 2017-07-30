@@ -30,6 +30,10 @@ class EncodeTestCase(tcm.TestCase):
         ([b'spam', b'eggs'],    b'l4:spam4:eggse'),     # list of homogeneous values
         ([{b'x': []}, [-10]],   b'ld1:xleeli-10eee'),   # heterogeneous values are also OK
 
+        # Tuples (encoded as lists)
+        ((),                    b'le'),
+        ((b'spam', b'eggs'),    b'l4:spam4:eggse'),
+
         # Dictionaries
         ({},                                    b'de'),
         ({b'cow': b'moo', b'spam': b'eggs'},    b'd3:cow3:moo4:spam4:eggse'),
@@ -41,7 +45,6 @@ class EncodeTestCase(tcm.TestCase):
 
     @tcm.values(
         None,
-        tuple(),
         str(),
         bytearray(),
         1.2,
