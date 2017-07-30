@@ -72,6 +72,15 @@ class EncodeTestCase(tcm.TestCase):
         message = outcome.exception.args[0]
         self.assertIn('key type', message)
 
+    @tcm.values(
+        {'x': 1, b'x': 2},
+    )
+    def test_duplicate_keys_will_raise(self, value):
+        with self.assertRaises(ValueError) as outcome:
+            bencode.encode(value)
+        message = outcome.exception.args[0]
+        self.assertEqual(message, 'duplicate key x')
+
 
 class IterEncodeTestCase(tcm.TestCase):
     @tcm.values(

@@ -73,8 +73,12 @@ def _encode_list(values):
 @iterencode.register(dict)
 def _encode_dict(values):
     yield b'd'
-    for key, value in sorted(_iter_dict_check_keys(values)):
-        yield from iterencode(key)
+    last_encoded_key = None
+    for encoded_key, _, value, key in sorted(_iter_dict_check_keys(values)):
+        if encoded_key == last_encoded_key:
+            raise ValueError('duplicate key {0}'.format(key))
+        last_encoded_key = encoded_key
+        yield from iterencode(encoded_key)
         yield from iterencode(value)
     yield b'e'
 
@@ -82,9 +86,12 @@ def _encode_dict(values):
 def _iter_dict_check_keys(values):
     """Yield (key, value) pairs from a dict while ensuring keys being of bytes type."""
     for key, value in values.items():
+        # For consistency in error reporting, let bytes go before str
+        # in case of duplicate keys.  The error message will refer to
+        # the str key then.
         if isinstance(key, str):
-            yield key.encode(), value
+            yield key.encode(), 1, value, key
         elif isinstance(key, bytes):
-            yield key, value
+            yield key, 0, value, key
         else:
             raise TypeError('invalid key type {0}'.format(type(key)))
