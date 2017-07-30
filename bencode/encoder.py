@@ -74,7 +74,7 @@ def iterencode(value, *, strict=False):     # noqa: C901
                 raise ValueError('duplicate key {0}'.format(key), location)
             last_encoded_key = encoded_key
             location.append(key)
-            yield from func(encoded_key)
+            yield from _encode_bytes(encoded_key)
             yield from func(value)
             location.pop()
         yield b'e'
