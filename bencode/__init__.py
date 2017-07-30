@@ -9,3 +9,4 @@ __version__ = '0.0.1'
 
 
 from .encoder import encode, iterencode     # noqa: F401
+from .decoder import decode                 # noqa: F401
