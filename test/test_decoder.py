@@ -46,15 +46,6 @@ class DecodeTestCase(tcm.TestCase):
 
     @tcm.values(
         # pylint:disable=bad-whitespace
-        (b'd4:spam4:eggse',             {'spam': b'eggs'}),
-        (b'd4:\xF0\x9F\x92\xA9i0ee',    {'\N{PILE OF POO}': 0}),
-    )
-    def test_good_keys_are_decoded_in_keytostr_mode(self, value, expected_result):
-        result = bencode.decode(value, keytostr=True)
-        self.assertEqual(result, expected_result)
-
-    @tcm.values(
-        # pylint:disable=bad-whitespace
 
         (None,          TypeError, 'cannot be decoded'),
         (bytearray(),   TypeError, 'cannot be decoded'),
@@ -100,12 +91,23 @@ class DecodeTestCase(tcm.TestCase):
         message = outcome.exception.args[0]
         self.assertIn(expected_message, message)
 
+
+class DecodeKeyToStrTestCase(tcm.TestCase):
+    @tcm.values(
+        # pylint:disable=bad-whitespace
+        (b'd4:spam4:eggse',             {'spam': b'eggs'}),
+        (b'd4:\xF0\x9F\x92\xA9i0ee',    {'\N{PILE OF POO}': 0}),
+    )
+    def test_good_keys_are_decoded(self, value, expected_result):
+        result = bencode.decode(value, keytostr=True)
+        self.assertEqual(result, expected_result)
+
     @tcm.values(
         # pylint:disable=bad-whitespace
         (b'd4:\x80i0ee',                ValueError, 'not a UTF-8 key'),     # invalid first byte
         (b'd4:\xF0\x82\x82\xACi0ee',    ValueError, 'not a UTF-8 key'),     # overlong encoding
     )
-    def test_bad_keys_will_raise_in_keytostr_mode(self, value, expected_exception_type, expected_message):
+    def test_bad_keys_will_raise(self, value, expected_exception_type, expected_message):
         with self.assertRaises(expected_exception_type) as outcome:
             bencode.decode(value, keytostr=True)
         message = outcome.exception.args[0]
