@@ -15,9 +15,11 @@ def encode(value, *, strict=False):
 
 def iterencode(value, *, strict=False):     # noqa: C901
     """Yield bencoding parts for the value or raise an error on unsupported types."""
+    location = []
+
     @functools.singledispatch
     def func(value):    # pylint:disable=missing-docstring
-        raise TypeError('object of type {0} cannot be encoded'.format(type(value)))
+        raise TypeError('object of type {0} cannot be encoded'.format(type(value)), location)
 
     if _USE_BYTES_INTERPOLATION:
         @func.register(bytes)
@@ -57,8 +59,10 @@ def iterencode(value, *, strict=False):     # noqa: C901
     @func.register(list)
     def _encode_list(values):       # pylint:disable=unused-variable
         yield b'l'
-        for value in values:
+        for index, value in enumerate(values):
+            location.append(index)
             yield from func(value)
+            location.pop()
         yield b'e'
 
     @func.register(dict)
@@ -67,10 +71,12 @@ def iterencode(value, *, strict=False):     # noqa: C901
         last_encoded_key = None
         for encoded_key, _, value, key in sorted(_iter_dict_check_keys(values)):
             if encoded_key == last_encoded_key:
-                raise ValueError('duplicate key {0}'.format(key))
+                raise ValueError('duplicate key {0}'.format(key), location)
             last_encoded_key = encoded_key
+            location.append(key)
             yield from func(encoded_key)
             yield from func(value)
+            location.pop()
         yield b'e'
 
     def _iter_dict_check_keys(values):
@@ -84,7 +90,7 @@ def iterencode(value, *, strict=False):     # noqa: C901
             elif not strict and isinstance(key, str):
                 yield key.encode(), 1, value, key
             else:
-                raise TypeError('invalid key type {0}'.format(type(key)))
+                raise TypeError('invalid key type {0}'.format(type(key)), location)
 
     if not strict:
         func.register(str, lambda x: _encode_bytes(x.encode()))

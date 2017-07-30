@@ -51,54 +51,74 @@ class EncodeTestCase(tcm.TestCase):
         self.assertEqual(result, expected_result)
 
     @tcm.values(
-        None,
-        bytearray(),
-        1.2,
-        3j,
+        # pylint:disable=bad-whitespace
+
+        (None,          []),
+        (bytearray(),   []),
+        (1.2,           []),
+        (3j,            []),
+
+        ([None],                [0]),
+
+        ([0, [1], None],        [2]),
+        ([3, {b'x': 1}, None],  [2]),
+
+        ({b'x': 1,
+          b'y': {b'n': 2},
+          b'z': None},          [b'z']),
+
+        ([3, {b'x': None}],     [1, b'x']),
     )
-    def test_bad_values_will_raise(self, value):
+    def test_bad_values_will_raise(self, value, expected_locaton):
         with self.assertRaises(TypeError) as outcome:
             bencode.encode(value)
-        message = outcome.exception.args[0]
+        message, location = outcome.exception.args
         self.assertIn('cannot be encoded', message)
+        self.assertListEqual(location, expected_locaton)
 
     @tcm.values(
-        tuple(),
-        str(),
+        # pylint:disable=bad-whitespace
+        (tuple(),   []),
+        (str(),     []),
     )
-    def test_bad_values_will_raise_in_strict_mode(self, value):
+    def test_bad_values_will_raise_in_strict_mode(self, value, expected_locaton):
         with self.assertRaises(TypeError) as outcome:
             bencode.encode(value, strict=True)
-        message = outcome.exception.args[0]
+        message, location = outcome.exception.args
         self.assertIn('cannot be encoded', message)
+        self.assertListEqual(location, expected_locaton)
 
     @tcm.values(
-        {None: 'x'},
-        {10: 'x'},
+        # pylint:disable=bad-whitespace
+        ({None: 'x'},   []),
+        ({10: 'x'},     []),
     )
-    def test_bad_keys_will_raise(self, value):
+    def test_bad_keys_will_raise(self, value, expected_locaton):
         with self.assertRaises(TypeError) as outcome:
             bencode.encode(value)
-        message = outcome.exception.args[0]
+        message, location = outcome.exception.args
         self.assertIn('key type', message)
+        self.assertListEqual(location, expected_locaton)
 
     @tcm.values(
-        {'x': 1},
+        ({'x': 1}, []),
     )
-    def test_bad_keys_will_raise_in_strict_mode(self, value):
+    def test_bad_keys_will_raise_in_strict_mode(self, value, expected_locaton):
         with self.assertRaises(TypeError) as outcome:
             bencode.encode(value, strict=True)
-        message = outcome.exception.args[0]
+        message, location = outcome.exception.args
         self.assertIn('key type', message)
+        self.assertListEqual(location, expected_locaton)
 
     @tcm.values(
-        {'x': 1, b'x': 2},
+        ({'x': 1, b'x': 2}, []),
     )
-    def test_duplicate_keys_will_raise(self, value):
+    def test_duplicate_keys_will_raise(self, value, expected_locaton):
         with self.assertRaises(ValueError) as outcome:
             bencode.encode(value)
-        message = outcome.exception.args[0]
+        message, location = outcome.exception.args
         self.assertEqual(message, 'duplicate key x')
+        self.assertListEqual(location, expected_locaton)
 
 
 class IterEncodeTestCase(tcm.TestCase):
