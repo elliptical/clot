@@ -31,6 +31,13 @@ def _encode_int(value):
     yield b'e'
 
 
+@iterencode.register(bool)
+def _encode_bool(value):
+    yield b'i'
+    yield b'1' if value else b'0'
+    yield b'e'
+
+
 @iterencode.register(list)
 def _encode_list(values):
     yield b'l'

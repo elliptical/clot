@@ -21,6 +21,10 @@ class EncodeTestCase(tcm.TestCase):
 
         ((1 << 64) - 1, b'i18446744073709551615e'),     # 64-bit unsigned int is supported
 
+        # Booleans (encoded as integers)
+        (False, b'i0e'),
+        (True,  b'i1e'),
+
         # Lists
         ([],                    b'le'),                 # empty list
         ([b'spam', b'eggs'],    b'l4:spam4:eggse'),     # list of homogeneous values
