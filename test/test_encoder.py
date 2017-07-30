@@ -107,6 +107,17 @@ class IterEncodeTestCase(tcm.TestCase):
              b'6', b':', b'answer', b'i', b'42', b'e',
              b'3', b':', b'cow', b'l', b'3', b':', b'moo', b'e',
              b'e')),
+
+        # Dictionary keys from the same character yet different composition
+        ({'A\N{COMBINING RING ABOVE}': 1,
+          '\N{LATIN CAPITAL LETTER A WITH RING ABOVE}': 2,
+          '\N{ANGSTROM SIGN}': 3},
+            (
+            b'd',
+            b'3', b':', b'A\xcc\x8a',     b'i', b'1', b'e',
+            b'2', b':', b'\xc3\x85',      b'i', b'2', b'e',
+            b'3', b':', b'\xe2\x84\xab',  b'i', b'3', b'e',
+            b'e')),
     )
     def test_good_values_yield_parts(self, value, expected_result):
         result = tuple(bencode.iterencode(value))
