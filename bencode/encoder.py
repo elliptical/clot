@@ -14,7 +14,7 @@ def iterencode(value, *, strict=False):     # noqa: C901
     location = []
 
     @functools.singledispatch
-    def func(value):    # pylint:disable=missing-docstring
+    def func(value):
         raise TypeError('object of type {0} cannot be encoded'.format(type(value)), location)
 
     @func.register(bytes)
@@ -26,19 +26,19 @@ def iterencode(value, *, strict=False):     # noqa: C901
             yield value
 
     @func.register(int)
-    def _encode_int(value):     # pylint:disable=unused-variable
+    def _encode_int(value):
         yield b'i'
         yield b'%d' % value
         yield b'e'
 
     @func.register(bool)
-    def _encode_bool(value):        # pylint:disable=unused-variable
+    def _encode_bool(value):
         yield b'i'
         yield b'1' if value else b'0'
         yield b'e'
 
     @func.register(list)
-    def _encode_list(values):       # pylint:disable=unused-variable
+    def _encode_list(values):
         yield b'l'
         for index, value in enumerate(values):
             location.append(index)
@@ -47,7 +47,7 @@ def iterencode(value, *, strict=False):     # noqa: C901
         yield b'e'
 
     @func.register(dict)
-    def _encode_dict(values):       # pylint:disable=unused-variable
+    def _encode_dict(values):
         yield b'd'
         last_encoded_key = None
         for encoded_key, _, value, key in sorted(_iter_dict_check_keys(values)):
