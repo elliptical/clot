@@ -2,10 +2,6 @@
 
 
 import functools
-import sys
-
-
-_USE_BYTES_INTERPOLATION = sys.version_info >= (3, 5)
 
 
 def encode(value, *, strict=False):
@@ -21,34 +17,19 @@ def iterencode(value, *, strict=False):     # noqa: C901
     def func(value):    # pylint:disable=missing-docstring
         raise TypeError('object of type {0} cannot be encoded'.format(type(value)), location)
 
-    if _USE_BYTES_INTERPOLATION:
-        @func.register(bytes)
-        def _encode_bytes(value):
-            value_length = len(value)
-            yield b'%d' % value_length
-            yield b':'
-            if value_length > 0:
-                yield value
+    @func.register(bytes)
+    def _encode_bytes(value):
+        value_length = len(value)
+        yield b'%d' % value_length
+        yield b':'
+        if value_length > 0:
+            yield value
 
-        @func.register(int)
-        def _encode_int(value):     # pylint:disable=unused-variable
-            yield b'i'
-            yield b'%d' % value
-            yield b'e'
-    else:   # pragma: no cover (because we do not run code coverage with Python 3.4)
-        @func.register(bytes)
-        def _encode_bytes(value):
-            value_length = len(value)
-            yield str(value_length).encode('ascii')
-            yield b':'
-            if value_length > 0:
-                yield value
-
-        @func.register(int)
-        def _encode_int(value):
-            yield b'i'
-            yield str(value).encode('ascii')
-            yield b'e'
+    @func.register(int)
+    def _encode_int(value):     # pylint:disable=unused-variable
+        yield b'i'
+        yield b'%d' % value
+        yield b'e'
 
     @func.register(bool)
     def _encode_bool(value):        # pylint:disable=unused-variable
