@@ -1,7 +1,7 @@
 """This module lets decode data according to the Bencoding specification."""
 
 
-def decode(value, *, keytostr=False):   # noqa: C901
+def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-statements
     """Return the decoded value."""
     if not isinstance(value, bytes):
         raise TypeError('object of type {0} cannot be decoded'.format(type(value)))
