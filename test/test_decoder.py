@@ -52,44 +52,55 @@ class DecodeTestCase(tcm.TestCase):
         ('',            TypeError, 'cannot be decoded'),
         ([],            TypeError, 'cannot be decoded'),
         ({},            TypeError, 'cannot be decoded'),
-        (b'',           ValueError, 'value is empty'),
-        (b'x',          ValueError, 'unknown type selector 0x78'),
-
-        # Bytes
-        (b'0',          ValueError, 'missing data size delimiter'),
-        (b'00:',        ValueError, 'malformed data size'),
-        (b'0 :',        ValueError, 'malformed data size'),
-        (b'0:x',        ValueError, 'extra bytes at the end'),
-        (b'2:x',        ValueError, 'wrong data size'),
-        (b'2.:x',       ValueError, 'invalid literal for int'),
-
-        # Integers
-        (b'ie',         ValueError, 'invalid literal for int'),
-        (b'i e',        ValueError, 'invalid literal for int'),
-        (b'i0',         ValueError, 'missing int value terminator'),
-        (b'i03e',       ValueError, 'malformed int value'),
-        (b'i-0e',       ValueError, 'malformed int value'),
-        (b'i 1 e',      ValueError, 'malformed int value'),
-        (b'i0e-',       ValueError, 'extra bytes at the end'),
-
-        # Lists
-        (b'l e',        ValueError, 'unknown type selector 0x20'),
-        (b'le-',        ValueError, 'extra bytes at the end'),
-        (b'l',          ValueError, 'missing list value terminator'),
-
-        # Dictionaries
-        (b'd e',        ValueError, 'unknown type selector 0x20'),
-        (b'de-',        ValueError, 'extra bytes at the end'),
-        (b'd',          ValueError, 'missing dict value terminator'),
-        (b'd3:cowe',    ValueError, 'unknown type selector 0x65'),
-        (b'd3:cowi0e3:cowi0ee', ValueError, 'duplicate key'),
-        (b'di0e3:cowe', ValueError, 'unsupported key type'),
     )
     def test_bad_values_will_raise(self, value, expected_exception_type, expected_message):
         with self.assertRaises(expected_exception_type) as outcome:
             bencode.decode(value)
         message = outcome.exception.args[0]
         self.assertIn(expected_message, message)
+
+    @tcm.values(
+        # pylint:disable=bad-whitespace
+
+        (b'',           0, ValueError, 'value is empty'),
+        (b'x',          0, ValueError, 'unknown type selector 0x78'),
+
+        # Bytes
+        (b'0',          0, ValueError, 'missing data size delimiter'),
+        (b'00:',        0, ValueError, 'malformed data size'),
+        (b'0 :',        0, ValueError, 'malformed data size'),
+        (b'0:x',        2, ValueError, 'extra bytes at the end'),
+        (b'2:x',        0, ValueError, 'wrong data size'),
+        (b'2.:x',       0, ValueError, 'invalid literal for int'),
+
+        # Integers
+        (b'ie',         0, ValueError, 'invalid literal for int'),
+        (b'i e',        0, ValueError, 'invalid literal for int'),
+        (b'i0',         0, ValueError, 'missing int value terminator'),
+        (b'i03e',       0, ValueError, 'malformed int value'),
+        (b'i-0e',       0, ValueError, 'malformed int value'),
+        (b'i 1 e',      0, ValueError, 'malformed int value'),
+        (b'i0e-',       3, ValueError, 'extra bytes at the end'),
+
+        # Lists
+        (b'l e',        1, ValueError, 'unknown type selector 0x20'),
+        (b'le-',        2, ValueError, 'extra bytes at the end'),
+        (b'l',          0, ValueError, 'missing list value terminator'),
+
+        # Dictionaries
+        (b'd e',        1, ValueError, 'unknown type selector 0x20'),
+        (b'de-',        2, ValueError, 'extra bytes at the end'),
+        (b'd',          0, ValueError, 'missing dict value terminator'),
+        (b'd3:cowe',    6, ValueError, 'unknown type selector 0x65'),
+        (b'd3:cowi0e3:cowi0ee', 9, ValueError, 'duplicate key'),
+        (b'di0e3:cowe', 1, ValueError, 'unsupported key type'),
+    )
+    def test_bad_values_will_raise_with_error_location(self, value, expected_locaton, expected_exception_type, expected_message):
+        with self.assertRaises(expected_exception_type) as outcome:
+            bencode.decode(value)
+        message, location = outcome.exception.args
+        self.assertIn(expected_message, message)
+        self.assertEqual(location, expected_locaton)
 
 
 class DecodeKeyToStrTestCase(tcm.TestCase):
@@ -104,11 +115,12 @@ class DecodeKeyToStrTestCase(tcm.TestCase):
 
     @tcm.values(
         # pylint:disable=bad-whitespace
-        (b'd4:\x80i0ee',                ValueError, 'not a UTF-8 key'),     # invalid first byte
-        (b'd4:\xF0\x82\x82\xACi0ee',    ValueError, 'not a UTF-8 key'),     # overlong encoding
+        (b'd4:\x80i0ee',                1, ValueError, 'not a UTF-8 key'),     # invalid first byte
+        (b'd4:\xF0\x82\x82\xACi0ee',    1, ValueError, 'not a UTF-8 key'),     # overlong encoding
     )
-    def test_bad_keys_will_raise(self, value, expected_exception_type, expected_message):
+    def test_bad_keys_will_raise(self, value, expected_locaton, expected_exception_type, expected_message):
         with self.assertRaises(expected_exception_type) as outcome:
             bencode.decode(value, keytostr=True)
-        message = outcome.exception.args[0]
+        message, location = outcome.exception.args
         self.assertIn(expected_message, message)
+        self.assertEqual(location, expected_locaton)

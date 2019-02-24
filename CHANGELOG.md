@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Python 3.7 is now supported.
 
+### Changed
+- ValueError raised by decode(bytes) now has 2 arguments.
+
+  The first one is an error message as usual. The second one is an
+  offset in the original bytes where the error happened.
+
 ### Removed
 - Python 3.4 is no longer supported.
 

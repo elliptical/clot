@@ -6,7 +6,7 @@ def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-st
     if not isinstance(value, bytes):
         raise TypeError('object of type {} cannot be decoded'.format(type(value)))
     elif value == b'':
-        raise ValueError('value is empty')
+        raise ValueError('value is empty', 0)
 
     next_pos = 0
     last_pos = len(value)
@@ -54,6 +54,7 @@ def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-st
         nonlocal next_pos
 
         result = []
+        list_pos = next_pos
         next_pos += 1
         while next_pos < last_pos:
             if value[next_pos] == ord('e'):
@@ -61,30 +62,32 @@ def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-st
                 return result
             result.append(_decode_item())
 
-        raise ValueError('missing list value terminator')
+        raise ValueError('missing list value terminator', list_pos)
 
     def _decode_dict():
         nonlocal next_pos
 
         result = {}
+        dict_pos = next_pos
         next_pos += 1
         while next_pos < last_pos:
             if value[next_pos] == ord('e'):
                 next_pos += 1
                 return result
+            key_pos = next_pos
             key = _decode_item()
             if not isinstance(key, bytes):
-                raise ValueError('unsupported key type {}'.format(type(key)))
+                raise ValueError('unsupported key type {}'.format(type(key)), key_pos)
             if keytostr:
                 try:
                     key = key.decode()
                 except UnicodeDecodeError:
-                    raise ValueError('not a UTF-8 key {}'.format(key))
+                    raise ValueError('not a UTF-8 key {}'.format(key), key_pos)
             if key in result:
-                raise ValueError('duplicate key {}'.format(key))
+                raise ValueError('duplicate key {}'.format(key), key_pos)
             result[key] = _decode_item()
 
-        raise ValueError('missing dict value terminator')
+        raise ValueError('missing dict value terminator', dict_pos)
 
     selector = {
         ord('0'): _decode_bytes,
@@ -105,8 +108,14 @@ def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-st
     def _decode_item():
         return selector.get(value[next_pos], _unknown_type)()
 
-    result = _decode_item()
-    if next_pos != last_pos:
-        raise ValueError('extra bytes at the end')
+    try:
+        result = _decode_item()
+        if next_pos != last_pos:
+            raise ValueError('extra bytes at the end')
+    except ValueError as ex:
+        # Append the error location unless already present
+        if len(ex.args) == 1:
+            ex.args += (next_pos,)
+        raise
 
     return result
