@@ -5,8 +5,8 @@ https://wiki.theory.org/index.php/BitTorrentSpecification#Bencoding
 """
 
 
-__version__ = '0.1.0'
+__version__ = '1.0.0'
 
 
-from .encoder import encode, iterencode     # noqa: F401
 from .decoder import decode                 # noqa: F401
+from .encoder import encode, iterencode     # noqa: F401
