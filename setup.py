@@ -15,7 +15,7 @@ PACKAGE_NAME = 'bencode'
 
 
 if sys.version_info < (3, 5):
-    raise RuntimeError('ERROR: {} requires Python 3.5 or higher'.format(PACKAGE_NAME))
+    raise RuntimeError('{} requires Python 3.5 or higher'.format(PACKAGE_NAME))
 
 
 def get_version():
@@ -35,8 +35,8 @@ setup(
     name=PACKAGE_NAME,
     author='Andrei Boulgakov',
     author_email='andrei.boulgakov@outlook.com',
-    url='https://github.com/elliptical/bencode',
-    download_url='https://github.com/elliptical/%s/archive/%s.tar.gz' % (PACKAGE_NAME, VERSION),
+    url='https://github.com/elliptical/{}'.format(PACKAGE_NAME),
+    download_url='https://github.com/elliptical/{}/archive/{}.tar.gz'.format(PACKAGE_NAME, VERSION),
     license='MIT',
     platforms='All',
     description='Bencoding helpers',
