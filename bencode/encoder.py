@@ -61,7 +61,7 @@ def iterencode(value, *, strict=False):     # noqa: C901
         yield b'e'
 
     def _iter_dict_check_keys(values):
-        """Yield (key, value) pairs from a dict while ensuring keys being of bytes type."""
+        """Yield 4-tuples of (encoded key, ordinal, value, original key) from a dict."""
         for key, value in values.items():
             # For consistency in error reporting, let bytes go before str
             # in case of duplicate keys.  The error message will refer to
