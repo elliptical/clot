@@ -23,10 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   offset in the original bytes where the error happened.
 
 ### Removed
-- Python 3.4 is no longer supported.
+- `Python 3.4` is no longer supported.
 
 ## [0.1.0] - 2017-07-30
-- Initial release
+- Initial release.
 
 [Unreleased]: https://github.com/elliptical/bencode/compare/1.0.0...HEAD
 [1.0.0]: https://github.com/elliptical/bencode/compare/0.1.0...1.0.0
