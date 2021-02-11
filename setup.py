@@ -18,6 +18,14 @@ if sys.version_info < (3, 6):
     raise RuntimeError(f'{PACKAGE_NAME} requires Python 3.6 or higher')
 
 
+def get_readme():
+    """Return the contents of the package's README.md file excluding the badges row."""
+    with open_text_file('README.md') as readme_file:
+        text = readme_file.read()
+    h1_pos = text.index('\n#') + 1
+    return text[h1_pos:]
+
+
 def get_version():
     """Return the version string from the package's __init__.py file."""
     with open_text_file(PACKAGE_NAME, '__init__.py') as version_file:
@@ -46,6 +54,8 @@ setup(
     license='MIT',
     platforms='All',
     description='Bencoding helpers',
+    long_description=get_readme(),
+    long_description_content_type='text/markdown',
     version=VERSION,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
