@@ -19,8 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Python 3.4 is no longer supported.
 
-## 0.1.0 - 2017-07-30
+## [0.1.0] - 2017-07-30
 - Initial release
 
 [Unreleased]: https://github.com/elliptical/bencode/compare/1.0.0...HEAD
 [1.0.0]: https://github.com/elliptical/bencode/compare/0.1.0...1.0.0
+[0.1.0]: https://github.com/elliptical/bencode/releases/tag/0.1.0
