@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `Python 3.5` is no longer supported.
 
+### Fixed
+- `python path/setup.py install` no longer throws an exception trying to
+  locate the package's `__init__.py` file.
+
 ## [1.0.0] - 2019-02-23
 ### Added
 - Python 3.7 is now supported.
