@@ -5,8 +5,6 @@ import bencode
 
 class DecodeTestCase(tcm.TestCase):
     @tcm.values(
-        # pylint:disable=bad-whitespace
-
         # Bytes
         (b'0:',             b''),
         (b'1:1',            b'1'),
@@ -45,8 +43,6 @@ class DecodeTestCase(tcm.TestCase):
         self.assertEqual(result, expected_result)
 
     @tcm.values(
-        # pylint:disable=bad-whitespace
-
         (None,          TypeError, 'cannot be decoded'),
         (bytearray(),   TypeError, 'cannot be decoded'),
         ('',            TypeError, 'cannot be decoded'),
@@ -60,8 +56,6 @@ class DecodeTestCase(tcm.TestCase):
         self.assertIn(expected_message, message)
 
     @tcm.values(
-        # pylint:disable=bad-whitespace
-
         (b'',           0, ValueError, 'value is empty'),
         (b'x',          0, ValueError, 'unknown type selector 0x78'),
 
@@ -105,7 +99,6 @@ class DecodeTestCase(tcm.TestCase):
 
 class DecodeKeyToStrTestCase(tcm.TestCase):
     @tcm.values(
-        # pylint:disable=bad-whitespace
         (b'd4:spam4:eggse',             {'spam': b'eggs'}),
         (b'd4:\xF0\x9F\x92\xA9i0ee',    {'\N{PILE OF POO}': 0}),
     )
@@ -114,7 +107,6 @@ class DecodeKeyToStrTestCase(tcm.TestCase):
         self.assertEqual(result, expected_result)
 
     @tcm.values(
-        # pylint:disable=bad-whitespace
         (b'd4:\x80i0ee',                1, ValueError, 'not a UTF-8 key'),     # invalid first byte
         (b'd4:\xF0\x82\x82\xACi0ee',    1, ValueError, 'not a UTF-8 key'),     # overlong encoding
     )

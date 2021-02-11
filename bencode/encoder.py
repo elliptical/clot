@@ -15,7 +15,7 @@ def iterencode(value, *, strict=False):     # noqa: C901
 
     @functools.singledispatch
     def func(value):
-        raise TypeError('object of type {} cannot be encoded'.format(type(value)), location)
+        raise TypeError(f'object of type {type(value)} cannot be encoded', location)
 
     @func.register(bytes)
     def _encode_bytes(value):
@@ -52,7 +52,7 @@ def iterencode(value, *, strict=False):     # noqa: C901
         last_encoded_key = None
         for encoded_key, _, value, key in sorted(_iter_dict_check_keys(values)):
             if encoded_key == last_encoded_key:
-                raise ValueError('duplicate key {}'.format(key), location)
+                raise ValueError(f'duplicate key {key}', location)
             last_encoded_key = encoded_key
             location.append(key)
             yield from _encode_bytes(encoded_key)
@@ -71,7 +71,7 @@ def iterencode(value, *, strict=False):     # noqa: C901
             elif not strict and isinstance(key, str):
                 yield key.encode(), 1, value, key
             else:
-                raise TypeError('invalid key type {}'.format(type(key)), location)
+                raise TypeError(f'invalid key type {type(key)}', location)
 
     if not strict:
         func.register(str, lambda x: _encode_bytes(x.encode()))
