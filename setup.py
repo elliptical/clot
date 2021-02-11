@@ -71,8 +71,6 @@ setup(
         'Programming Language :: Python :: Implementation :: CPython',
     ],
     keywords=[
-        'python',
-        'python3',
         'bencode',
     ],
     python_requires='>=3.6',
