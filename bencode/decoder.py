@@ -4,7 +4,7 @@
 def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-statements
     """Return the decoded value."""
     if not isinstance(value, bytes):
-        raise TypeError('object of type {} cannot be decoded'.format(type(value)))
+        raise TypeError(f'object of type {type(value)} cannot be decoded')
     if value == b'':
         raise ValueError('value is empty', 0)
 
@@ -12,7 +12,7 @@ def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-st
     last_pos = len(value)
 
     def _unknown_type():
-        raise ValueError('unknown type selector 0x{:02X}'.format(value[next_pos]))
+        raise ValueError(f'unknown type selector 0x{value[next_pos]:02X}')
 
     def _decode_bytes():
         nonlocal next_pos
@@ -77,14 +77,14 @@ def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-st
             key_pos = next_pos
             key = _decode_item()
             if not isinstance(key, bytes):
-                raise ValueError('unsupported key type {}'.format(type(key)), key_pos)
+                raise ValueError(f'unsupported key type {type(key)}', key_pos)
             if keytostr:
                 try:
                     key = key.decode()
                 except UnicodeDecodeError as ex:
-                    raise ValueError('not a UTF-8 key {}'.format(key), key_pos) from ex
+                    raise ValueError(f'not a UTF-8 key {key}', key_pos) from ex
             if key in result:
-                raise ValueError('duplicate key {}'.format(key), key_pos)
+                raise ValueError(f'duplicate key {key}', key_pos)
             result[key] = _decode_item()
 
         raise ValueError('missing dict value terminator', dict_pos)
