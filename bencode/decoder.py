@@ -5,7 +5,7 @@ def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-st
     """Return the decoded value."""
     if not isinstance(value, bytes):
         raise TypeError('object of type {} cannot be decoded'.format(type(value)))
-    elif value == b'':
+    if value == b'':
         raise ValueError('value is empty', 0)
 
     next_pos = 0
@@ -81,8 +81,8 @@ def decode(value, *, keytostr=False):   # noqa: C901 pylint: disable=too-many-st
             if keytostr:
                 try:
                     key = key.decode()
-                except UnicodeDecodeError:
-                    raise ValueError('not a UTF-8 key {}'.format(key), key_pos)
+                except UnicodeDecodeError as ex:
+                    raise ValueError('not a UTF-8 key {}'.format(key), key_pos) from ex
             if key in result:
                 raise ValueError('duplicate key {}'.format(key), key_pos)
             result[key] = _decode_item()
