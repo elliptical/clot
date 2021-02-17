@@ -1,6 +1,6 @@
 import tcm
 
-import bencode
+from clot import bencode
 
 
 class EncodeTestCase(tcm.TestCase):

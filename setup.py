@@ -1,6 +1,6 @@
 """Setup script.
 
-Run "python setup.py install" to install the bencode package.
+Run "python setup.py install" to install the clot package.
 """
 
 
@@ -8,10 +8,10 @@ from os import path
 import re
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
-PACKAGE_NAME = 'bencode'
+PACKAGE_NAME = 'clot'
 
 
 if sys.version_info < (3, 6):
@@ -74,6 +74,6 @@ setup(
         'bencode',
     ],
     python_requires='>=3.6',
-    packages=[PACKAGE_NAME],
+    packages=find_packages(),
     zip_safe=True,
 )

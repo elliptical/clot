@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Python 3.8` is now supported.
 - `Python 3.9` is now supported.
 
+### Changed
+- The package layout is not flat anymore.  Replace `import bencode` with
+  `from clot import bencode` in your code to accommodate this change.
+
 ### Removed
 - `Python 3.5` is no longer supported.
 
