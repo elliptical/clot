@@ -1,12 +1,10 @@
 import tcm
 
-import bencode
+from clot import bencode
 
 
 class EncodeTestCase(tcm.TestCase):
     @tcm.values(
-        # pylint:disable=bad-whitespace
-
         # Bytes
         (b'',           b'0:'),             # empty byte string (the colon is still present)
         (b'spam\x00',   b'5:spam\x00'),     # no special treatment for the terminating zero
@@ -51,8 +49,6 @@ class EncodeTestCase(tcm.TestCase):
         self.assertEqual(result, expected_result)
 
     @tcm.values(
-        # pylint:disable=bad-whitespace
-
         (None,          []),
         (bytearray(),   []),
         (1.2,           []),
@@ -77,7 +73,6 @@ class EncodeTestCase(tcm.TestCase):
         self.assertListEqual(location, expected_locaton)
 
     @tcm.values(
-        # pylint:disable=bad-whitespace
         ({None: 'x'},   []),
         ({10: 'x'},     []),
     )
@@ -101,7 +96,6 @@ class EncodeTestCase(tcm.TestCase):
 
 class EncodeStrictTestCase(tcm.TestCase):
     @tcm.values(
-        # pylint:disable=bad-whitespace
         (tuple(),   []),
         (str(),     []),
     )
@@ -125,8 +119,6 @@ class EncodeStrictTestCase(tcm.TestCase):
 
 class IterEncodeTestCase(tcm.TestCase):
     @tcm.values(
-        # pylint:disable=bad-whitespace,bad-continuation
-
         # Bytes
         (b'',       (b'0', b':')),
         (b'spam',   (b'4', b':', b'spam')),
