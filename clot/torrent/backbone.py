@@ -22,3 +22,13 @@ class Backbone:     # pylint: disable=too-few-public-methods
             file.write(raw_bytes)
         self.raw_bytes = raw_bytes
         self.file_path = file_path
+
+    def save(self):
+        """Write the torrent to the file from which it was previously loaded or saved to."""
+        if self.file_path is None:
+            raise Exception('expected a torrent loaded from file')
+
+        raw_bytes = bencode.encode(self.data)
+        with open(self.file_path, 'wb') as file:
+            file.write(raw_bytes)
+        self.raw_bytes = raw_bytes

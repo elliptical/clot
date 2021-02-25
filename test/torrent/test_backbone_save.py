@@ -49,6 +49,36 @@ class SaveAsTestCase(tcm.TestCase):
             self.assertEqual(read_from(file_path), t.raw_bytes)
 
 
+class SaveTestCase(tcm.TestCase):
+    def test_orphan_torrent_will_raise(self):
+        t = torrent.parse(b'd2:my5:valuee')
+        with self.assertRaises(Exception) as outcome:
+            t.save()
+        message = outcome.exception.args[0]
+        self.assertEqual(message, 'expected a torrent loaded from file')
+
+    def test_original_file_is_overwritten(self):
+        with temp_file_path(contents=b'd2:my5:valuee') as file_path:
+            t = torrent.load(file_path)
+            t.data['my'] = 'modified'
+            t.save()
+            self.assertEqual(t.raw_bytes, b'd2:my8:modifiede')
+            self.assertEqual(read_from(file_path), t.raw_bytes)
+
+    def test_loaded_file_can_be_saved_elsewhere(self):
+        with temp_file_path(contents=b'd2:my5:valuee') as file_path:
+            t = torrent.load(file_path)
+            t.data['my'] = 'modified'
+
+            with temp_file_path() as new_file_path:
+                t.save_as(new_file_path)
+                self.assertEqual(t.raw_bytes, b'd2:my8:modifiede')
+                self.assertEqual(t.file_path, new_file_path)
+                self.assertEqual(read_from(new_file_path), t.raw_bytes)
+
+            self.assertEqual(read_from(file_path), b'd2:my5:valuee')
+
+
 @contextmanager
 def temp_file_path(*, contents=None):
     with NamedTemporaryFile(prefix='clot-', suffix='.torrent', delete=contents is None) as file:
