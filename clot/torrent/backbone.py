@@ -4,7 +4,7 @@
 from .. import bencode
 
 
-class Backbone:     # pylint: disable=too-few-public-methods
+class Backbone:
     """Torrent file low-level contents."""
 
     def __init__(self, raw_bytes, file_path=None):
