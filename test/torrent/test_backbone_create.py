@@ -1,3 +1,5 @@
+from os import path
+
 import tcm
 
 from clot import torrent
@@ -8,6 +10,7 @@ class CreateTestCase(tcm.TestCase):
         t = torrent.new()
         self.assertEqual(t.raw_bytes, b'de')
         self.assertDictEqual(t.data, {})
+        self.assertIsNone(t.file_path)
 
     @tcm.values(
         (None,  'cannot be decoded'),
@@ -40,3 +43,23 @@ class CreateTestCase(tcm.TestCase):
         t = torrent.parse(raw_bytes)
         self.assertEqual(t.raw_bytes, raw_bytes)
         self.assertDictEqual(t.data, expected_dict)
+        self.assertIsNone(t.file_path)
+
+
+class LoadTestCase(tcm.TestCase):
+    def test_empty_file_will_raise(self):
+        with self.assertRaises(ValueError) as outcome:
+            torrent.load(self.data('empty_file.torrent'))
+        message = outcome.exception.args[0]
+        self.assertIn('value is empty', message)
+
+    def test_empty_dict_will_not_raise(self):
+        t = torrent.load(self.data('empty_dict.torrent'))
+        self.assertEqual(t.raw_bytes, b'de')
+        self.assertDictEqual(t.data, {})
+        self.assertTrue(t.file_path.endswith('empty_dict.torrent'))
+
+    @staticmethod
+    def data(file_path):
+        my_dir = path.dirname(__file__)
+        return path.join(my_dir, 'data', file_path)

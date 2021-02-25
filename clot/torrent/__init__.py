@@ -16,3 +16,10 @@ def new():
 def parse(raw_bytes):
     """Create a torrent from a bytes-like object."""
     return Backbone(raw_bytes)
+
+
+def load(file_path):
+    """Create a torrent from a file specified by the path-like object."""
+    with open(file_path, 'rb') as readable:
+        raw_bytes = readable.read()
+    return Backbone(raw_bytes, file_path)
