@@ -14,3 +14,11 @@ class Backbone:     # pylint: disable=too-few-public-methods
         if not isinstance(self.data, dict):
             raise ValueError(f'expected top-level dictionary instead of {type(self.data)}')
         self.file_path = file_path
+
+    def save_as(self, file_path, *, overwrite=False):
+        """Write the torrent to a file and remember the new path and contents on success."""
+        raw_bytes = bencode.encode(self.data)
+        with open(file_path, 'wb' if overwrite else 'xb') as file:
+            file.write(raw_bytes)
+        self.raw_bytes = raw_bytes
+        self.file_path = file_path
