@@ -2,7 +2,7 @@
 disable = missing-docstring
 
 [BASIC]
-good-names = x,y,z,cm
+good-names = t,x,y,z,cm
 
 [FORMAT]
 max-line-length = 130
