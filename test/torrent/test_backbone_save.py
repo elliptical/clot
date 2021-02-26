@@ -8,6 +8,9 @@ import tcm
 from clot import torrent
 
 
+SOME_BYTES = b'old garbage'
+
+
 class SaveAsTestCase(tcm.TestCase):
     def test_new_file_is_created(self):
         t = torrent.new()
@@ -26,23 +29,23 @@ class SaveAsTestCase(tcm.TestCase):
         t = torrent.new()
         t.data['my'] = 'value'
 
-        with temp_file_path(contents=b'old garbage') as file_path:
+        with temp_file_path(contents=SOME_BYTES) as file_path:
             self.assertTrue(path.exists(file_path))
-            self.assertEqual(read_bytes(file_path), b'old garbage')
+            self.assertEqual(read_bytes(file_path), SOME_BYTES)
 
             with self.assertRaises(FileExistsError):
                 t.save_as(file_path)
             self.assertEqual(t.raw_bytes, b'de')
             self.assertIsNone(t.file_path)
-            self.assertEqual(read_bytes(file_path), b'old garbage')
+            self.assertEqual(read_bytes(file_path), SOME_BYTES)
 
     def test_existing_file_can_be_overwritten_when_asked(self):
         t = torrent.new()
         t.data['my'] = 'value'
 
-        with temp_file_path(contents=b'old garbage') as file_path:
+        with temp_file_path(contents=SOME_BYTES) as file_path:
             self.assertTrue(path.exists(file_path))
-            self.assertEqual(read_bytes(file_path), b'old garbage')
+            self.assertEqual(read_bytes(file_path), SOME_BYTES)
 
             t.save_as(file_path, overwrite=True)
             self.assertEqual(t.raw_bytes, b'd2:my5:valuee')
@@ -84,20 +87,20 @@ class DumpTestCase(tcm.TestCase):
     def test_existing_file_will_raise_by_default(self):
         t = torrent.new()
 
-        with temp_file_path(contents=b'old garbage') as file_path:
+        with temp_file_path(contents=SOME_BYTES) as file_path:
             self.assertTrue(path.exists(file_path))
-            self.assertEqual(read_bytes(file_path), b'old garbage')
+            self.assertEqual(read_bytes(file_path), SOME_BYTES)
 
             with self.assertRaises(FileExistsError):
                 t.dump(file_path)
-            self.assertEqual(read_bytes(file_path), b'old garbage')
+            self.assertEqual(read_bytes(file_path), SOME_BYTES)
 
     def test_existing_file_can_be_overwritten_when_asked(self):
         t = torrent.new()
 
-        with temp_file_path(contents=b'old garbage') as file_path:
+        with temp_file_path(contents=SOME_BYTES) as file_path:
             self.assertTrue(path.exists(file_path))
-            self.assertEqual(read_bytes(file_path), b'old garbage')
+            self.assertEqual(read_bytes(file_path), SOME_BYTES)
 
             t.dump(file_path, overwrite=True)
             self.assertEqual(read_str(file_path), '{}')
