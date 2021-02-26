@@ -19,7 +19,7 @@ class SaveAsTestCase(tcm.TestCase):
             self.assertEqual(t.raw_bytes, b'd2:my5:valuee')
             self.assertEqual(t.file_path, file_path)
             self.assertTrue(path.exists(file_path))
-            self.assertEqual(read_from(file_path), t.raw_bytes)
+            self.assertEqual(read_bytes(file_path), t.raw_bytes)
 
     def test_existing_file_will_raise_by_default(self):
         t = torrent.new()
@@ -27,13 +27,13 @@ class SaveAsTestCase(tcm.TestCase):
 
         with temp_file_path(contents=b'old garbage') as file_path:
             self.assertTrue(path.exists(file_path))
-            self.assertEqual(read_from(file_path), b'old garbage')
+            self.assertEqual(read_bytes(file_path), b'old garbage')
 
             with self.assertRaises(FileExistsError):
                 t.save_as(file_path)
             self.assertEqual(t.raw_bytes, b'de')
             self.assertIsNone(t.file_path)
-            self.assertEqual(read_from(file_path), b'old garbage')
+            self.assertEqual(read_bytes(file_path), b'old garbage')
 
     def test_existing_file_can_be_overwritten_when_asked(self):
         t = torrent.new()
@@ -41,12 +41,12 @@ class SaveAsTestCase(tcm.TestCase):
 
         with temp_file_path(contents=b'old garbage') as file_path:
             self.assertTrue(path.exists(file_path))
-            self.assertEqual(read_from(file_path), b'old garbage')
+            self.assertEqual(read_bytes(file_path), b'old garbage')
 
             t.save_as(file_path, overwrite=True)
             self.assertEqual(t.raw_bytes, b'd2:my5:valuee')
             self.assertEqual(t.file_path, file_path)
-            self.assertEqual(read_from(file_path), t.raw_bytes)
+            self.assertEqual(read_bytes(file_path), t.raw_bytes)
 
 
 class SaveTestCase(tcm.TestCase):
@@ -63,7 +63,7 @@ class SaveTestCase(tcm.TestCase):
             t.data['my'] = 'modified'
             t.save()
             self.assertEqual(t.raw_bytes, b'd2:my8:modifiede')
-            self.assertEqual(read_from(file_path), t.raw_bytes)
+            self.assertEqual(read_bytes(file_path), t.raw_bytes)
 
     def test_loaded_file_can_be_saved_elsewhere(self):
         with temp_file_path(contents=b'd2:my5:valuee') as file_path:
@@ -74,9 +74,9 @@ class SaveTestCase(tcm.TestCase):
                 t.save_as(new_file_path)
                 self.assertEqual(t.raw_bytes, b'd2:my8:modifiede')
                 self.assertEqual(t.file_path, new_file_path)
-                self.assertEqual(read_from(new_file_path), t.raw_bytes)
+                self.assertEqual(read_bytes(new_file_path), t.raw_bytes)
 
-            self.assertEqual(read_from(file_path), b'd2:my5:valuee')
+            self.assertEqual(read_bytes(file_path), b'd2:my5:valuee')
 
 
 @contextmanager
@@ -92,6 +92,6 @@ def temp_file_path(*, contents=None):
         remove(file_path)
 
 
-def read_from(file_path):
+def read_bytes(file_path):
     with open(file_path, 'rb') as file:
         return file.read()
