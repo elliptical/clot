@@ -84,7 +84,7 @@ def _add_traversal_arguments_to(parser):
 
 
 def _add_file_arguments_to(parser):
-    parser.add_argument('--stash',
+    parser.add_argument('-s', '--stash',
                         metavar='DIR',
                         help='stash torrents with errors in this directory')
 
@@ -111,7 +111,7 @@ def _add_dump_arguments_to(parser):
                         action='store_true',
                         help='sort the output of dictionaries alphabetically by key')
 
-    parser.add_argument('--overwrite',
+    parser.add_argument('-f', '--force',
                         action='store_true',
                         help='overwrite existing files')
 
@@ -165,7 +165,7 @@ def _dump_torrent(file_path, obj, args):
     obj.dump(file_path + '.json',
              indent=args.indent,
              sort_keys=args.sort_keys,
-             overwrite=args.overwrite)
+             overwrite=args.force)
 
 
 if __name__ == '__main__':
