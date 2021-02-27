@@ -32,6 +32,7 @@ def _parse_command_line():
 
     _add_traversal_arguments_to(parser)
     _add_file_arguments_to(parser)
+    _add_dump_arguments_to(parser)
 
     return parser.parse_args()
 
@@ -68,6 +69,33 @@ def _add_file_arguments_to(parser):
                         help='stash torrents with errors in this directory')
 
 
+def _add_dump_arguments_to(parser):
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--indent',
+                       type=int,
+                       default=4,
+                       help='separate items with newlines and use this number of spaces'
+                            ' for indentation (default: %(default)s)')
+    group.add_argument('--tab',
+                       action='store_const',
+                       const='\t',
+                       dest='indent',
+                       help='separate items with newlines and use tabs for indentation')
+    group.add_argument('--no-indent',
+                       action='store_const',
+                       const=None,
+                       dest='indent',
+                       help='separate items with spaces rather than newlines')
+
+    parser.add_argument('--sort-keys',
+                        action='store_true',
+                        help='sort the output of dictionaries alphabetically by key')
+
+    parser.add_argument('--overwrite',
+                        action='store_true',
+                        help='overwrite existing files')
+
+
 def traverse_dir(dir_path, args):
     """Traverse the directory (flat or recursive) and handle files with the specified extension."""
     def onerror(ex):
@@ -89,7 +117,11 @@ def handle_file(file_path, args):
         print(file_path)
 
     try:
-        torrent.load(file_path)
+        obj = torrent.load(file_path)
+        obj.dump(file_path + '.json',
+                 indent=args.indent,
+                 sort_keys=args.sort_keys,
+                 overwrite=args.overwrite)
     except (TypeError, ValueError) as ex:
         if args.stash:
             _stash_file(file_path, args.stash)
