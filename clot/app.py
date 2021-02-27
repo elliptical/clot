@@ -32,6 +32,7 @@ def _parse_command_line():
 
     subparsers = parser.add_subparsers(title='subcommands',
                                        required=True,
+                                       dest='subcommand',
                                        help='perform specific task on each torrent')
     _add_load_command_to(subparsers)
     _add_dump_command_to(subparsers)
