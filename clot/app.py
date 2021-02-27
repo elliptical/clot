@@ -30,11 +30,30 @@ def _parse_command_line():
                         action='version',
                         version=f'{__file__} {__version__}')
 
+    subparsers = parser.add_subparsers(title='subcommands',
+                                       required=True,
+                                       help='perform specific task on each torrent')
+    _add_load_command_to(subparsers)
+    _add_dump_command_to(subparsers)
+
+    return parser.parse_args()
+
+
+def _add_load_command_to(subparsers):
+    parser = subparsers.add_parser('load')
+    parser.set_defaults(func=_load_torrent)
+
+    _add_traversal_arguments_to(parser)
+    _add_file_arguments_to(parser)
+
+
+def _add_dump_command_to(subparsers):
+    parser = subparsers.add_parser('dump')
+    parser.set_defaults(func=_dump_torrent)
+
     _add_traversal_arguments_to(parser)
     _add_file_arguments_to(parser)
     _add_dump_arguments_to(parser)
-
-    return parser.parse_args()
 
 
 def _add_traversal_arguments_to(parser):
@@ -118,10 +137,7 @@ def handle_file(file_path, args):
 
     try:
         obj = torrent.load(file_path)
-        obj.dump(file_path + '.json',
-                 indent=args.indent,
-                 sort_keys=args.sort_keys,
-                 overwrite=args.overwrite)
+        args.func(file_path, obj, args)
     except (TypeError, ValueError) as ex:
         if args.stash:
             _stash_file(file_path, args.stash)
@@ -138,6 +154,17 @@ def _stash_file(file_path, dir_path):
         suffix += 1
         target = path.join(dir_path, f'{name}-{suffix}{ext}')
     shutil.copy2(file_path, target)
+
+
+def _load_torrent(file_path, obj, args):  # pylint: disable=unused-argument
+    pass
+
+
+def _dump_torrent(file_path, obj, args):
+    obj.dump(file_path + '.json',
+             indent=args.indent,
+             sort_keys=args.sort_keys,
+             overwrite=args.overwrite)
 
 
 if __name__ == '__main__':
