@@ -58,7 +58,10 @@ def _add_traversal_arguments_to(parser):
 
 def traverse_dir(dir_path, args):
     """Traverse the directory (flat or recursive) and handle files with the specified extension."""
-    for root, dirs, files in walk(dir_path):
+    def onerror(ex):
+        print(ex)
+
+    for root, dirs, files in walk(dir_path, onerror=onerror):
         if not args.recurse:
             dirs.clear()
 
