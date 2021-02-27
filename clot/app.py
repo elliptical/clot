@@ -43,6 +43,10 @@ def _add_traversal_arguments_to(parser):
                         action='store_true',
                         help='recurse into subdirectories')
 
+    parser.add_argument('--follow-links',
+                        action='store_true',
+                        help='walk down into symbolic links that resolve to directories')
+
     parser.add_argument('--ext',
                         default='.torrent',
                         help='filter the directories based on filename extension'
@@ -61,7 +65,7 @@ def traverse_dir(dir_path, args):
     def onerror(ex):
         print(ex)
 
-    for root, dirs, files in walk(dir_path, onerror=onerror):
+    for root, dirs, files in walk(dir_path, onerror=onerror, followlinks=args.follow_links):
         if not args.recurse:
             dirs.clear()
 
