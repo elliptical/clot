@@ -3,8 +3,9 @@
 
 from argparse import ArgumentParser
 from os import path, walk
+import shutil
 
-from clot import __version__
+from clot import __version__, torrent
 
 
 def main():
@@ -30,6 +31,7 @@ def _parse_command_line():
                         version=f'{__file__} {__version__}')
 
     _add_traversal_arguments_to(parser)
+    _add_file_arguments_to(parser)
 
     return parser.parse_args()
 
@@ -60,6 +62,12 @@ def _add_traversal_arguments_to(parser):
                              ' (default: current directory)')
 
 
+def _add_file_arguments_to(parser):
+    parser.add_argument('--stash',
+                        metavar='DIR',
+                        help='stash torrents with errors in this directory')
+
+
 def traverse_dir(dir_path, args):
     """Traverse the directory (flat or recursive) and handle files with the specified extension."""
     def onerror(ex):
@@ -80,9 +88,24 @@ def handle_file(file_path, args):
     if args.verbose:
         print(file_path)
 
-    # For now, just ensure we can read the file.
-    with open(file_path, 'rb') as file:
-        file.read()
+    try:
+        torrent.load(file_path)
+    except (TypeError, ValueError) as ex:
+        if args.stash:
+            _stash_file(file_path, args.stash)
+        if not args.verbose:
+            print(file_path)
+        print('\t', repr(ex), sep='')
+
+
+def _stash_file(file_path, dir_path):
+    name, ext = path.splitext(path.basename(file_path))
+    target = path.join(dir_path, name + ext)
+    suffix = 0
+    while path.exists(target):
+        suffix += 1
+        target = path.join(dir_path, f'{name}-{suffix}{ext}')
+    shutil.copy2(file_path, target)
 
 
 if __name__ == '__main__':
