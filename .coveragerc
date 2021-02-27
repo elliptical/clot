@@ -4,7 +4,7 @@ source =
     clot
     test
 omit =
-    clot\app.py
+    clot/app.py
 
 [report]
 show_missing = True
