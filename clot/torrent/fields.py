@@ -1,6 +1,9 @@
 """This module implements descriptors to handle torrent fields."""
 
 
+from .validators import Bounded, Typed
+
+
 class Layout(type):
     """Metaclass providing methods to load and save all fields at once."""
 
@@ -31,13 +34,13 @@ class Layout(type):
         return super().__new__(cls, name, bases, mapping)
 
 
-class Field:
+class Field(Typed):
     """Field with specific type and unrestricted values, including None."""
 
-    def __init__(self, key, value_type):
+    def __init__(self, key, value_type, **kwargs):
         """Initialize self."""
         self.key = key
-        self.value_type = value_type
+        super().__init__(value_type, **kwargs)
 
     def __set_name__(self, owner, name):
         """Customize the name used to store the field value."""
@@ -86,26 +89,10 @@ class Field:
             else:
                 instance.data[self.key] = value
 
-    def validate(self, value):
-        """Raise an exception on unexpected value type."""
-        if not isinstance(value, self.value_type):
-            raise TypeError(f'{self.name}: expected {value!r} to be of type {self.value_type}')
 
-
-class Integer(Field):
+class Integer(Field, Bounded):
     """Integer field with optional lower and/or upper bounds."""
 
-    def __init__(self, key, *, min_value=None, max_value=None):
+    def __init__(self, key, **kwargs):
         """Initialize self."""
-        super().__init__(key, int)
-        self.min_value = min_value
-        self.max_value = max_value
-
-    def validate(self, value):
-        """Raise an exception on invalid value."""
-        super().validate(value)
-
-        if self.min_value is not None and value < self.min_value:
-            raise ValueError(f'{self.name}: expected {value} to be at least {self.min_value}')
-        if self.max_value is not None and value > self.max_value:
-            raise ValueError(f'{self.name}: expected {value} to be at most {self.max_value}')
+        super().__init__(key, int, **kwargs)

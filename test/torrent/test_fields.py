@@ -53,6 +53,13 @@ class FieldTestCase(tcm.TestCase):
 
         self.assertIsInstance(Dummy.field, Field)
 
+    def test_unknown_keyword_will_raise(self):
+        with self.assertRaises(TypeError) as outcome:
+            class _Dummy(Base):
+                field = Field('x', int, some='stuff')
+        message = outcome.exception.args[0]
+        self.assertEqual(message, """unexpected arguments: {'some': 'stuff'}""")
+
     def test_missing_field_is_none(self):
         class Dummy(Base):
             field = Field('x', int)
