@@ -4,7 +4,7 @@
 from abc import ABC, abstractmethod
 
 
-# pylint: disable=too-few-public-methods,no-member
+# pylint: disable=no-member
 
 
 class Validator(ABC):
@@ -15,6 +15,10 @@ class Validator(ABC):
         # Report unexpected arguments.
         if kwargs:
             raise TypeError(f'unexpected arguments: {kwargs}')
+
+    def extract_value(self, instance):
+        """Return the underlying storage value (transform as necessary)."""
+        return instance.data[self.key]
 
     @abstractmethod
     def validate(self, value):
@@ -63,3 +67,18 @@ class NonEmpty(Validator):
         if not value.strip():
             raise ValueError(f'{self.name}: empty value is not allowed')
         super().validate(value)
+
+
+class Encoded(Validator):
+    """Decodes bytes to a string value using the UTF-8 encoding."""
+
+    def extract_value(self, instance):
+        """Convert bytes to string."""
+        value = instance.data[self.key]
+        if not isinstance(value, bytes):
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {bytes}')
+
+        try:
+            return value.decode()
+        except UnicodeDecodeError as ex:
+            raise ValueError(f'{self.name}: cannot decode {value!r} as UTF-8') from ex

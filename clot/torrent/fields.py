@@ -1,7 +1,7 @@
 """This module implements descriptors to handle torrent fields."""
 
 
-from .validators import Bounded, NonEmpty, Typed
+from .validators import Bounded, Encoded, NonEmpty, Typed
 
 
 class Layout(type):
@@ -67,7 +67,7 @@ class Field(Typed):
     def load_from(self, instance):
         """Initialize the field value from the instance data dictionary."""
         try:
-            value = instance.data[self.key]
+            value = self.extract_value(instance)
         except KeyError:
             value = None
         else:
@@ -104,3 +104,11 @@ class Bytes(Field, NonEmpty):
     def __init__(self, key, **kwargs):
         """Initialize self."""
         super().__init__(key, bytes, **kwargs)
+
+
+class String(Field, Encoded, NonEmpty):
+    """String field with nonempty value (stored as bytes)."""
+
+    def __init__(self, key, **kwargs):
+        """Initialize self."""
+        super().__init__(key, str, **kwargs)

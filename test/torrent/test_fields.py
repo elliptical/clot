@@ -1,6 +1,6 @@
 import tcm
 
-from clot.torrent.fields import Bytes, Field, Integer, Layout
+from clot.torrent.fields import Bytes, Field, Integer, Layout, String
 
 
 class Base(metaclass=Layout):
@@ -247,3 +247,47 @@ class BytesTestCase(tcm.TestCase):
         message = outcome.exception.args[0]
         self.assertIn('empty value is not allowed', message)
         self.assertEqual(dummy.field, b'123')
+
+
+class StringTestCase(tcm.TestCase):
+    def test_value_type_is_enforced(self):
+        class Dummy(Base):
+            field = String('x')
+
+        dummy = Dummy()
+        dummy.field = '123'
+        self.assertEqual(dummy.field, '123')
+
+        with self.assertRaises(TypeError) as outcome:
+            dummy.field = 0
+        message = outcome.exception.args[0]
+        self.assertIn("of type <class 'str'>", message)
+        self.assertEqual(dummy.field, '123')
+
+    def test_nonempty_value_is_enforced(self):
+        class Dummy(Base):
+            field = String('x')
+
+        dummy = Dummy()
+        dummy.field = '123'
+        self.assertEqual(dummy.field, '123')
+
+        with self.assertRaises(ValueError) as outcome:
+            dummy.field = '\r \n \t \v \f'
+        message = outcome.exception.args[0]
+        self.assertIn('empty value is not allowed', message)
+        self.assertEqual(dummy.field, '123')
+
+    @tcm.values(
+        (1,                                                     TypeError,     "field: expected 1 to be of type <class 'bytes'>"),
+        ('\N{CYRILLIC CAPITAL LETTER BE}'.encode('cp1251'),     ValueError,    r"field: cannot decode b'\xc1' as UTF-8"),
+    )
+    def test_bad_storage_will_raise_on_load(self, value, exception_type, expected_message):
+        class Dummy(Base):
+            field = String('x')
+
+        dummy = Dummy(x=value)
+        with self.assertRaises(exception_type) as outcome:
+            _ = dummy.field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, expected_message)
