@@ -44,6 +44,18 @@ class Field:
         setattr(instance, self.private_name, value)
         return value
 
+    def save_to(self, instance):
+        """Update the instance data dictionary with the field value."""
+        try:
+            value = getattr(instance, self.private_name)
+        except AttributeError:
+            pass
+        else:
+            if value is None:
+                instance.data.pop(self.key, None)
+            else:
+                instance.data[self.key] = value
+
     def validate(self, value):
         """Raise an exception on unexpected value type."""
         if not isinstance(value, self.value_type):

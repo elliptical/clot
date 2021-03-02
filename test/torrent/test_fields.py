@@ -88,3 +88,33 @@ class FieldTestCase(tcm.TestCase):
             dummy.field = bad_value
         message = outcome.exception.args[0]
         self.assertIn(f'of type {value_type}', message)
+
+    def test_set_field_can_be_saved(self):
+        class Dummy(Base):
+            field = Field('x', int)
+
+        dummy = Dummy(x=1)
+        self.assertDictEqual(dummy.data, {'x': 1})
+
+        # Updates existing key.
+        dummy.field = 2
+        Dummy.field.save_to(dummy)
+        self.assertDictEqual(dummy.data, {'x': 2})
+
+        # Deletes existing key.
+        dummy.field = None
+        Dummy.field.save_to(dummy)
+        self.assertDictEqual(dummy.data, {})
+
+        # Adds missing key.
+        dummy.field = 3
+        Dummy.field.save_to(dummy)
+        self.assertDictEqual(dummy.data, {'x': 3})
+
+    def test_not_loaded_field_does_not_raise_on_save(self):
+        class Dummy(Base):
+            field = Field('x', int)
+
+        dummy = Dummy(x=1)
+        Dummy.field.save_to(dummy)
+        self.assertDictEqual(dummy.data, {'x': 1})
