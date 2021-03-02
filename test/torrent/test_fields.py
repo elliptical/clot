@@ -165,6 +165,45 @@ class FieldTestCase(tcm.TestCase):
         self.assertDictEqual(dummy.data, {'x': 1})
 
 
+class HighLevelTypesTestCase(tcm.TestCase):
+    @tcm.values(
+        (Integer,   123,    '123',  'int'),
+        (Bytes,     b'123', 123,    'bytes'),
+        (String,    '123',  123,    'str'),
+    )
+    def test_value_type_is_enforced(self, field_type, good_value, bad_value, expected_type_name):
+        class Dummy(Base):
+            field = field_type('x')
+
+        dummy = Dummy()
+        dummy.field = good_value
+        self.assertEqual(dummy.field, good_value)
+
+        with self.assertRaises(TypeError) as outcome:
+            dummy.field = bad_value
+        message = outcome.exception.args[0]
+        self.assertIn(f"of type <class '{expected_type_name}'>", message)
+        self.assertEqual(dummy.field, good_value)
+
+    @tcm.values(
+        (Bytes,     b'123',     b'\r \n \t \v \f'),
+        (String,    '123',      '\r \n \t \v \f'),
+    )
+    def test_nonempty_value_is_enforced(self, field_type, good_value, empty_value):
+        class Dummy:
+            field = field_type('x')
+
+        dummy = Dummy()
+        dummy.field = good_value
+        self.assertEqual(dummy.field, good_value)
+
+        with self.assertRaises(ValueError) as outcome:
+            dummy.field = empty_value
+        message = outcome.exception.args[0]
+        self.assertIn('empty value is not allowed', message)
+        self.assertEqual(dummy.field, good_value)
+
+
 class IntegerTestCase(tcm.TestCase):
     def test_value_type_is_enforced(self):
         class Dummy(Base):
@@ -219,65 +258,7 @@ class IntegerTestCase(tcm.TestCase):
         self.assertEqual(dummy.field, max_value - 1)
 
 
-class BytesTestCase(tcm.TestCase):
-    def test_value_type_is_enforced(self):
-        class Dummy(Base):
-            field = Bytes('x')
-
-        dummy = Dummy()
-        dummy.field = b'123'
-        self.assertEqual(dummy.field, b'123')
-
-        with self.assertRaises(TypeError) as outcome:
-            dummy.field = 0
-        message = outcome.exception.args[0]
-        self.assertIn("of type <class 'bytes'>", message)
-        self.assertEqual(dummy.field, b'123')
-
-    def test_nonempty_value_is_enforced(self):
-        class Dummy(Base):
-            field = Bytes('x')
-
-        dummy = Dummy()
-        dummy.field = b'123'
-        self.assertEqual(dummy.field, b'123')
-
-        with self.assertRaises(ValueError) as outcome:
-            dummy.field = b'\r \n \t \v \f'
-        message = outcome.exception.args[0]
-        self.assertIn('empty value is not allowed', message)
-        self.assertEqual(dummy.field, b'123')
-
-
 class StringTestCase(tcm.TestCase):
-    def test_value_type_is_enforced(self):
-        class Dummy(Base):
-            field = String('x')
-
-        dummy = Dummy()
-        dummy.field = '123'
-        self.assertEqual(dummy.field, '123')
-
-        with self.assertRaises(TypeError) as outcome:
-            dummy.field = 0
-        message = outcome.exception.args[0]
-        self.assertIn("of type <class 'str'>", message)
-        self.assertEqual(dummy.field, '123')
-
-    def test_nonempty_value_is_enforced(self):
-        class Dummy(Base):
-            field = String('x')
-
-        dummy = Dummy()
-        dummy.field = '123'
-        self.assertEqual(dummy.field, '123')
-
-        with self.assertRaises(ValueError) as outcome:
-            dummy.field = '\r \n \t \v \f'
-        message = outcome.exception.args[0]
-        self.assertIn('empty value is not allowed', message)
-        self.assertEqual(dummy.field, '123')
-
     @tcm.values(
         (1,                                                     TypeError,     "field: expected 1 to be of type <class 'bytes'>"),
         ('\N{CYRILLIC CAPITAL LETTER BE}'.encode('cp1251'),     ValueError,    r"field: cannot decode b'\xc1' as UTF-8"),
