@@ -21,7 +21,6 @@ class Backbone:
 
     def __init__(self, raw_bytes, file_path=None):
         """Initialize self."""
-        self.raw_bytes = raw_bytes
         self.data = bencode.decode(raw_bytes, keytostr=True)
         if not isinstance(self.data, dict):
             raise ValueError(f'expected top-level dictionary instead of {type(self.data)}')
@@ -32,7 +31,6 @@ class Backbone:
         raw_bytes = bencode.encode(self.data)
         with open(file_path, 'wb' if overwrite else 'xb') as file:
             file.write(raw_bytes)
-        self.raw_bytes = raw_bytes
         self.file_path = file_path
 
     def save(self):
@@ -43,7 +41,6 @@ class Backbone:
         raw_bytes = bencode.encode(self.data)
         with open(self.file_path, 'wb') as file:
             file.write(raw_bytes)
-        self.raw_bytes = raw_bytes
 
     def dump(self, file_path, *, indent=None, sort_keys=False, overwrite=False):
         """Write the torrent to a file in JSON format."""
