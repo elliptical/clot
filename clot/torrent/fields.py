@@ -1,4 +1,4 @@
-"""This module implements a descriptor to handle torrent fields."""
+"""This module implements descriptors to handle torrent fields."""
 
 
 class Layout(type):
@@ -90,3 +90,22 @@ class Field:
         """Raise an exception on unexpected value type."""
         if not isinstance(value, self.value_type):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {self.value_type}')
+
+
+class Integer(Field):
+    """Integer field with optional lower and/or upper bounds."""
+
+    def __init__(self, key, *, min_value=None, max_value=None):
+        """Initialize self."""
+        super().__init__(key, int)
+        self.min_value = min_value
+        self.max_value = max_value
+
+    def validate(self, value):
+        """Raise an exception on invalid value."""
+        super().validate(value)
+
+        if self.min_value is not None and value < self.min_value:
+            raise ValueError(f'{self.name}: expected {value} to be at least {self.min_value}')
+        if self.max_value is not None and value > self.max_value:
+            raise ValueError(f'{self.name}: expected {value} to be at most {self.max_value}')
