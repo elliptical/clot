@@ -1,11 +1,49 @@
 import tcm
 
-from clot.torrent.fields import Field
+from clot.torrent.fields import Field, Layout
 
 
-class Base:
+class Base(metaclass=Layout):
     def __init__(self, **kwargs):
         self.data = kwargs
+        super().__init__()
+
+
+class LayoutTestCase(tcm.TestCase):
+    def test_existing_fields_attribute_will_raise(self):
+        with self.assertRaises(TypeError) as outcome:
+            class _Dummy(metaclass=Layout):
+                _fields = None
+
+        message = outcome.exception.args[0]
+        self.assertEqual(message, "'_Dummy' already has the '_fields' attribute")
+
+    def test_fields_can_be_loaded_at_once(self):
+        class Dummy(Base):
+            field_x = Field('x', int)
+            field_y = Field('y', int)
+
+        dummy = Dummy(x=1, y=2)
+        dummy.load_fields()     # pylint: disable=no-member
+
+        self.assertTrue(hasattr(dummy, '_field_x'))
+        self.assertEqual(getattr(dummy, '_field_x'), 1)
+
+        self.assertTrue(hasattr(dummy, '_field_y'))
+        self.assertEqual(getattr(dummy, '_field_y'), 2)
+
+    def test_fields_can_be_saved_at_once(self):
+        class Dummy(Base):
+            field_x = Field('x', int)
+            field_y = Field('y', int)
+
+        dummy = Dummy()
+        dummy.field_x = 1
+        dummy.field_y = 2
+
+        self.assertDictEqual(dummy.data, {})
+        dummy.save_fields()     # pylint: disable=no-member
+        self.assertDictEqual(dummy.data, {'x': 1, 'y': 2})
 
 
 class FieldTestCase(tcm.TestCase):

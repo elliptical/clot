@@ -1,6 +1,36 @@
 """This module implements a descriptor to handle torrent fields."""
 
 
+class Layout(type):
+    """Metaclass providing methods to load and save all fields at once."""
+
+    def __new__(cls, name, bases, mapping):
+        """Create the class after expanding the original mapping."""
+        fields = [value for value in mapping.values() if isinstance(value, Field)]
+
+        def load_fields(self):
+            for field in self._fields:
+                field.load_from(self)
+
+        def save_fields(self):
+            for field in self._fields:
+                field.save_to(self)
+
+        new_stuff = {
+            '_fields': fields,
+            load_fields.__name__: load_fields,
+            save_fields.__name__: save_fields,
+        }
+
+        for key in new_stuff:
+            if key in mapping:
+                raise TypeError(f'{name!r} already has the {key!r} attribute')
+
+        mapping.update(new_stuff)
+
+        return super().__new__(cls, name, bases, mapping)
+
+
 class Field:
     """Field with specific type and unrestricted values, including None."""
 
