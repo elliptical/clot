@@ -1,6 +1,6 @@
 import tcm
 
-from clot.torrent.fields import Field, Integer, Layout
+from clot.torrent.fields import Bytes, Field, Integer, Layout
 
 
 class Base(metaclass=Layout):
@@ -217,3 +217,33 @@ class IntegerTestCase(tcm.TestCase):
         message = outcome.exception.args[0]
         self.assertIn(expected_message, message)
         self.assertEqual(dummy.field, max_value - 1)
+
+
+class BytesTestCase(tcm.TestCase):
+    def test_value_type_is_enforced(self):
+        class Dummy(Base):
+            field = Bytes('x')
+
+        dummy = Dummy()
+        dummy.field = b'123'
+        self.assertEqual(dummy.field, b'123')
+
+        with self.assertRaises(TypeError) as outcome:
+            dummy.field = 0
+        message = outcome.exception.args[0]
+        self.assertIn("of type <class 'bytes'>", message)
+        self.assertEqual(dummy.field, b'123')
+
+    def test_nonempty_value_is_enforced(self):
+        class Dummy(Base):
+            field = Bytes('x')
+
+        dummy = Dummy()
+        dummy.field = b'123'
+        self.assertEqual(dummy.field, b'123')
+
+        with self.assertRaises(ValueError) as outcome:
+            dummy.field = b'\r \n \t \v \f'
+        message = outcome.exception.args[0]
+        self.assertIn('empty value is not allowed', message)
+        self.assertEqual(dummy.field, b'123')

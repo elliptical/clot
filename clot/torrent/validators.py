@@ -53,3 +53,13 @@ class Bounded(Validator):
         if self.max_value is not None and value > self.max_value:
             raise ValueError(f'{self.name}: expected {value} to be at most {self.max_value}')
         super().validate(value)
+
+
+class NonEmpty(Validator):
+    """Validates the value being non-empty (not whitespace only)."""
+
+    def validate(self, value):
+        """Raise an exception if the value consists of whitespace only."""
+        if not value.strip():
+            raise ValueError(f'{self.name}: empty value is not allowed')
+        super().validate(value)

@@ -1,7 +1,7 @@
 """This module implements descriptors to handle torrent fields."""
 
 
-from .validators import Bounded, Typed
+from .validators import Bounded, NonEmpty, Typed
 
 
 class Layout(type):
@@ -96,3 +96,11 @@ class Integer(Field, Bounded):
     def __init__(self, key, **kwargs):
         """Initialize self."""
         super().__init__(key, int, **kwargs)
+
+
+class Bytes(Field, NonEmpty):
+    """Bytes field with non-empty value."""
+
+    def __init__(self, key, **kwargs):
+        """Initialize self."""
+        super().__init__(key, bytes, **kwargs)
