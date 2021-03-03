@@ -5,7 +5,7 @@ import textwrap
 
 import tcm
 
-from clot import torrent
+from clot import bencode, torrent
 
 
 SOME_BYTES = b'old garbage'
@@ -146,6 +146,19 @@ class DumpTestCase(tcm.TestCase):
         t.data['y'] = b'\xab\xcd'   # not a valid UTF-8, will be hex in the output
         t.data['z'] = '\N{SHRUG}'   # 4-byte UTF-8
         expected_json = '{"x": "value", "y": "hex::abcd", "z": "' + '\N{SHRUG}' + '"}'
+
+        with temp_file_path(suffix='.json') as file_path:
+            self.assertFalse(path.exists(file_path))
+
+            t.dump(file_path)
+            self.assertIsNone(t.file_path)
+            self.assertTrue(path.exists(file_path))
+            self.assertEqual(read_str(file_path), expected_json)
+
+    def test_creation_date_outputs_as_iso_string(self):
+        raw_bytes = bencode.encode({'creation date': 0})
+        t = torrent.parse(raw_bytes)
+        expected_json = '{"creation date": "1970-01-01 00:00:00+00:00"}'
 
         with temp_file_path(suffix='.json') as file_path:
             self.assertFalse(path.exists(file_path))

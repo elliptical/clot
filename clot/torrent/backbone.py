@@ -1,8 +1,10 @@
 """This module implements the torrent's underlying storage."""
 
 
+from datetime import datetime
 import json
 
+from .fields import Layout
 from .. import bencode
 
 
@@ -13,10 +15,12 @@ class _JsonEncoder(json.JSONEncoder):
                 return o.decode()
             except UnicodeDecodeError:
                 return 'hex::' + o.hex()
+        elif isinstance(o, datetime):
+            return o.isoformat(sep=' ')
         return super().default(o)
 
 
-class Backbone:
+class Backbone(metaclass=Layout):
     """Torrent file low-level contents."""
 
     def __init__(self, raw_bytes, file_path=None):
@@ -26,8 +30,11 @@ class Backbone:
             raise ValueError(f'expected top-level dictionary instead of {type(self.data)}')
         self.file_path = file_path
 
+        self.load_fields()  # pylint: disable=no-member
+
     def save_as(self, file_path, *, overwrite=False):
         """Write the torrent to a file and remember the new path and contents on success."""
+        self.save_fields()  # pylint: disable=no-member
         raw_bytes = bencode.encode(self.data)
         with open(file_path, 'wb' if overwrite else 'xb') as file:
             file.write(raw_bytes)
@@ -38,12 +45,14 @@ class Backbone:
         if self.file_path is None:
             raise Exception('expected a torrent loaded from file')
 
+        self.save_fields()  # pylint: disable=no-member
         raw_bytes = bencode.encode(self.data)
         with open(self.file_path, 'wb') as file:
             file.write(raw_bytes)
 
     def dump(self, file_path, *, indent=None, sort_keys=False, overwrite=False):
         """Write the torrent to a file in JSON format."""
+        self.save_fields()  # pylint: disable=no-member
         with open(file_path, 'w' if overwrite else 'x', encoding='utf-8') as file:
             json.dump(self.data, file, cls=_JsonEncoder, ensure_ascii=False,
                       indent=indent, sort_keys=sort_keys)
