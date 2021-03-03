@@ -1,6 +1,6 @@
 import tcm
 
-from clot.torrent.fields import Bytes, Field, Integer, Layout, String
+from clot.torrent.fields import Bytes, Field, Integer, Layout, String, Url
 
 
 class Base(metaclass=Layout):
@@ -167,9 +167,10 @@ class FieldTestCase(tcm.TestCase):
 
 class HighLevelTypesTestCase(tcm.TestCase):
     @tcm.values(
-        (Integer,   123,    '123',  'int'),
-        (Bytes,     b'123', 123,    'bytes'),
-        (String,    '123',  123,    'str'),
+        (Integer,   123,                    '123',  'int'),
+        (Bytes,     b'123',                 123,    'bytes'),
+        (String,    '123',                  123,    'str'),
+        (Url,       'http://example.com',   123,    'str'),
     )
     def test_value_type_is_enforced(self, field_type, good_value, bad_value, expected_type_name):
         class Dummy(Base):
@@ -186,8 +187,9 @@ class HighLevelTypesTestCase(tcm.TestCase):
         self.assertEqual(dummy.field, good_value)
 
     @tcm.values(
-        (Bytes,     b'123',     b'\r \n \t \v \f'),
-        (String,    '123',      '\r \n \t \v \f'),
+        (Bytes,     b'123',                 b'\r \n \t \v \f'),
+        (String,    '123',                  '\r \n \t \v \f'),
+        (Url,       'http://example.com',   '\r \n \t \v \f'),
     )
     def test_nonempty_value_is_enforced(self, field_type, good_value, empty_value):
         class Dummy:
@@ -272,3 +274,36 @@ class StringTestCase(tcm.TestCase):
             _ = dummy.field
         message = outcome.exception.args[0]
         self.assertEqual(message, expected_message)
+
+
+class UrlTestCase(tcm.TestCase):
+    @tcm.values(
+        (1,                     None,     TypeError,    "field: expected 1 to be of type <class 'bytes'>"),
+        (b'http2://hostname',   None,     ValueError,   "field: the value 'http2://hostname' is ill-formed (unexpected scheme)"),
+        (b'http://hostname',    ['ftp'],  ValueError,   "field: the value 'http://hostname' is ill-formed (unexpected scheme)"),
+        (b'hostname',           [],       ValueError,   "field: the value 'hostname' is ill-formed (missing scheme)"),
+        (b'hostname',           [''],     ValueError,   "field: the value 'hostname' is ill-formed (missing scheme)"),
+        (b'http://:20',         None,     ValueError,   "field: the value 'http://:20' is ill-formed (missing hostname)"),
+    )
+    def test_malformed_string_will_raise_on_load(self, value, schemes, exception_type, expected_message):
+        class Dummy(Base):
+            field = Url('x', schemes=schemes)
+
+        dummy = Dummy(x=value)
+        with self.assertRaises(exception_type) as outcome:
+            _ = dummy.field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, expected_message)
+
+    @tcm.values(
+        (b'ftp://hostname',         ['ftp']),
+        (b'https://hostname',       None),
+        (b'http://hostname:123',    None),
+        (b'udp://hostname',         None),
+    )
+    def test_valid_string_is_accepted(self, value, schemes):
+        class Dummy(Base):
+            field = Url('x', schemes=schemes)
+
+        dummy = Dummy(x=value)
+        self.assertEqual(dummy.field, value.decode())

@@ -2,6 +2,7 @@
 
 
 from abc import ABC, abstractmethod
+from urllib.parse import urlparse
 
 
 # pylint: disable=no-member
@@ -82,3 +83,29 @@ class Encoded(Validator):
             return value.decode()
         except UnicodeDecodeError as ex:
             raise ValueError(f'{self.name}: cannot decode {value!r} as UTF-8') from ex
+
+
+class ValidUrl(Validator):
+    """Ensures the value is an URL with non-empty scheme and hostname."""
+
+    default_schemes = (
+        'https',
+        'http',
+        'udp',
+    )
+
+    def __init__(self, schemes=None, **kwargs):
+        """Initialize self."""
+        self.schemes = list(filter(None, schemes or self.default_schemes))
+        super().__init__(**kwargs)
+
+    def validate(self, value):
+        """Raise an exception on nonconforming values."""
+        parsed = urlparse(value)
+        if not parsed.scheme.strip():
+            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing scheme)')
+        if parsed.scheme not in self.schemes:
+            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (unexpected scheme)')
+        if parsed.hostname is None or not parsed.hostname.strip():
+            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing hostname)')
+        super().validate(value)

@@ -1,7 +1,7 @@
 """This module implements descriptors to handle torrent fields."""
 
 
-from .validators import Bounded, Encoded, NonEmpty, Typed
+from .validators import Bounded, Encoded, NonEmpty, Typed, ValidUrl
 
 
 class Layout(type):
@@ -112,3 +112,7 @@ class String(Field, Encoded, NonEmpty):
     def __init__(self, key, **kwargs):
         """Initialize self."""
         super().__init__(key, str, **kwargs)
+
+
+class Url(String, ValidUrl):    # pylint: disable=too-many-ancestors
+    """String field looking like an URL (non-empty scheme and hostname required)."""
