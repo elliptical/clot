@@ -1,6 +1,12 @@
+from datetime import datetime, timezone
+
 import tcm
 
-from clot.torrent.fields import Bytes, Field, Integer, Layout, String, Url
+from clot.torrent.fields import Bytes, Field, Integer, Layout, String, Timestamp, Url
+
+
+NOW_TZ_AWARE = datetime.now(tz=timezone.utc)
+NOW_NAIVE = datetime.now()
 
 
 class Base(metaclass=Layout):
@@ -171,6 +177,7 @@ class HighLevelTypesTestCase(tcm.TestCase):
         (Bytes,     b'123',                 123,    'bytes'),
         (String,    '123',                  123,    'str'),
         (Url,       'http://example.com',   123,    'str'),
+        (Timestamp, NOW_TZ_AWARE,           123,    'datetime.datetime'),
     )
     def test_value_type_is_enforced(self, field_type, good_value, bad_value, expected_type_name):
         class Dummy(Base):
@@ -307,3 +314,29 @@ class UrlTestCase(tcm.TestCase):
 
         dummy = Dummy(x=value)
         self.assertEqual(dummy.field, value.decode())
+
+
+class TimestampTestCase(tcm.TestCase):
+    @tcm.values(
+        (b'1',              TypeError,      "field: expected b'1' to be of type <class 'int'>"),
+        (100_000_000_000,   ValueError,     'field: cannot convert 100000000000 to a timestamp'),
+    )
+    def test_bad_storage_will_raise_on_load(self, value, exception_type, expected_message):
+        class Dummy(Base):
+            field = Timestamp('x')
+
+        dummy = Dummy(x=value)
+        with self.assertRaises(exception_type) as outcome:
+            _ = dummy.field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, expected_message)
+
+    def test_timestamp_requires_tzinfo(self):
+        class Dummy(Base):
+            field = Timestamp('x')
+
+        dummy = Dummy()
+        with self.assertRaises(ValueError) as outcome:
+            dummy.field = NOW_NAIVE
+        message = outcome.exception.args[0]
+        self.assertEqual(message, f'field: the value {NOW_NAIVE!r} is missing timezone info')

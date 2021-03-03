@@ -1,7 +1,9 @@
 """This module implements descriptors to handle torrent fields."""
 
 
-from .validators import Bounded, Encoded, NonEmpty, Typed, ValidUrl
+from datetime import datetime
+
+from .validators import Bounded, Encoded, NonEmpty, Typed, UnixEpoch, ValidUrl
 
 
 class Layout(type):
@@ -116,3 +118,11 @@ class String(Field, Encoded, NonEmpty):
 
 class Url(String, ValidUrl):    # pylint: disable=too-many-ancestors
     """String field looking like an URL (non-empty scheme and hostname required)."""
+
+
+class Timestamp(Field, UnixEpoch, Bounded):
+    """Timestamp field with required timezone info."""
+
+    def __init__(self, key, **kwargs):
+        """Initialize self."""
+        super().__init__(key, datetime, **kwargs)

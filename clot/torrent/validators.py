@@ -2,6 +2,7 @@
 
 
 from abc import ABC, abstractmethod
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 
@@ -108,4 +109,27 @@ class ValidUrl(Validator):
             raise ValueError(f'{self.name}: the value {value!r} is ill-formed (unexpected scheme)')
         if parsed.hostname is None or not parsed.hostname.strip():
             raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing hostname)')
+        super().validate(value)
+
+
+class UnixEpoch(Validator):
+    """Interprets int as a timestamp in the standard Unix epoch format."""
+
+    def extract_value(self, instance):
+        """Convert integer to UTC datetime."""
+        value = instance.data[self.key]
+        if not isinstance(value, int):
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {int}')
+
+        # Interpret the value according to the standard Unix epoch format, which represents
+        # the number of seconds elapsed since 1970-01-01 00:00:00 +0000 (UTC).
+        try:
+            return datetime.fromtimestamp(value, timezone.utc)
+        except (OverflowError, OSError) as ex:
+            raise ValueError(f'{self.name}: cannot convert {value!r} to a timestamp') from ex
+
+    def validate(self, value):
+        """Raise an exception if timezone info is missing."""
+        if value.tzinfo is None:
+            raise ValueError(f'{self.name}: the value {value!r} is missing timezone info')
         super().validate(value)
