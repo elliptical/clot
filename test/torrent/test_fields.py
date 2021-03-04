@@ -199,7 +199,7 @@ class HighLevelTypesTestCase(tcm.TestCase):
         (Url,       'http://example.com',   '\r \n \t \v \f'),
     )
     def test_nonempty_value_is_enforced(self, field_type, good_value, empty_value):
-        class Dummy:
+        class Dummy(Base):
             field = field_type('x')
 
         dummy = Dummy()
