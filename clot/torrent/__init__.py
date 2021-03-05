@@ -1,7 +1,14 @@
 """This package provides torrent-related functions and classes.
 
-Torrent structure is described at the following address:
-https://wiki.theory.org/index.php/BitTorrentSpecification#Metainfo_File_Structure
+Torrent structure is described at the following addresses:
+
+https://www.bittorrent.org/beps/bep_0003.html
+https://www.bittorrent.org/beps/bep_0027.html
+
+https://wiki.theory.org/BitTorrentSpecification#Metainfo_File_Structure
+https://wiki.theory.org/index.php/Talk:BitTorrentSpecification
+
+http://wiki.bitcomet.com/inside_bitcomet
 """
 
 

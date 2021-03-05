@@ -1,7 +1,7 @@
 """This package provides a codec for bencoded data.
 
 The official Bencoding specification can be found at the following address:
-https://wiki.theory.org/index.php/BitTorrentSpecification#Bencoding
+https://wiki.theory.org/BitTorrentSpecification#Bencoding
 """
 
 

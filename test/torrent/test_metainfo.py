@@ -17,6 +17,12 @@ class CreateTestCase(tcm.TestCase):
         self.assertIsNone(t.comment)
         self.assertIsNone(t.created_by)
         self.assertIsNone(t.encoding)
+        self.assertIsNone(t.publisher)
+        self.assertIsNone(t.publisher_url)
+        self.assertIsNone(t.nodes)
+        self.assertIsNone(t.url_list)
+        self.assertIsNone(t.private)
+        self.assertIsNone(t.codepage)
 
     def test_mapping_is_parsed_into_correct_fields(self):
         raw_bytes = bencode.encode({
@@ -27,6 +33,12 @@ class CreateTestCase(tcm.TestCase):
             'comment': 'a trivial comment',
             'created by': 'clot/0.0.0',
             'encoding': 'UTF-8',
+            'publisher': 'torrent creator',
+            'publisher-url': 'http://creator.site/and/path',
+            'nodes': [['host-a', 123], ['host-b', 456]],
+            'url-list': ['http://mirror.com/pub', 'http://another.com/pub'],
+            'private': 1,
+            'codepage': 437,
 
             'unknown to clot': 'stays in data dict',
         })
@@ -43,3 +55,9 @@ class CreateTestCase(tcm.TestCase):
         self.assertEqual(t.comment, 'a trivial comment')
         self.assertEqual(t.created_by, 'clot/0.0.0')
         self.assertEqual(t.encoding, 'UTF-8')
+        self.assertEqual(t.publisher, 'torrent creator')
+        self.assertEqual(t.publisher_url, 'http://creator.site/and/path')
+        self.assertListEqual(t.nodes, [[b'host-a', 123], [b'host-b', 456]])
+        self.assertEqual(t.url_list, [b'http://mirror.com/pub', b'http://another.com/pub'])
+        self.assertEqual(t.private, 1)
+        self.assertEqual(t.codepage, 437)
