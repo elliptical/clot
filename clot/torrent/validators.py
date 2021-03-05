@@ -89,16 +89,16 @@ class Encoded(Validator):
         if self.encoding:
             encodings.append(self.encoding)
         else:
-            codepage = instance.codepage
+            codepage = getattr(instance, 'codepage', None)
             if codepage:
                 codepage = f'cp{codepage}'
 
-            encoding = instance.encoding or codepage
+            encoding = getattr(instance, 'encoding', None) or codepage
             if encoding and encoding.replace('_', '-').upper() not in ('UTF-8', 'UTF8'):
                 encodings.append(encoding)
             encodings.append('UTF-8')
 
-            fallback_encoding = instance.fallback_encoding
+            fallback_encoding = getattr(instance, 'fallback_encoding', None)
             if fallback_encoding:
                 encodings.append(fallback_encoding)
 

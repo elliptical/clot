@@ -12,10 +12,6 @@ LETTER_BE = '\N{CYRILLIC CAPITAL LETTER BE}'
 
 
 class Base(metaclass=Layout):
-    codepage = None
-    encoding = None
-    fallback_encoding = None
-
     def __init__(self, **kwargs):
         self.data = kwargs
         super().__init__()
