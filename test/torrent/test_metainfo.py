@@ -3,6 +3,9 @@ import tcm
 from clot import bencode, torrent
 
 
+LETTER_BE = '\N{CYRILLIC CAPITAL LETTER BE}'
+
+
 class CreateTestCase(tcm.TestCase):
     def test_new_torrent_has_none_in_all_fields(self):
         t = torrent.new()
@@ -61,3 +64,18 @@ class CreateTestCase(tcm.TestCase):
         self.assertEqual(t.url_list, [b'http://mirror.com/pub', b'http://another.com/pub'])
         self.assertEqual(t.private, 1)
         self.assertEqual(t.codepage, 437)
+
+    def test_fallback_encoding_is_used(self):
+        t = torrent.new()
+
+        t.data['comment'] = LETTER_BE.encode('cp1251')
+
+        self.assertIsNone(t.fallback_encoding)
+        with self.assertRaises(ValueError) as outcome:
+            t.load_fields()     # pylint: disable=no-member
+        message = outcome.exception.args[0]
+        self.assertEqual(message, r"comment: cannot decode b'\xc1' as UTF-8")
+
+        t.fallback_encoding = 'cp1251'
+        t.load_fields()         # pylint: disable=no-member
+        self.assertEqual(t.comment, LETTER_BE)

@@ -98,6 +98,10 @@ class Encoded(Validator):
                 encodings.append(encoding)
             encodings.append('UTF-8')
 
+            fallback_encoding = instance.fallback_encoding
+            if fallback_encoding:
+                encodings.append(fallback_encoding)
+
         for encoding in encodings:
             try:
                 return value.decode(encoding)
