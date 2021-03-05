@@ -85,16 +85,26 @@ class Encoded(Validator):
         if not isinstance(value, bytes):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {bytes}')
 
-        codepage = instance.codepage
-        if codepage:
-            codepage = f'cp{codepage}'
+        encodings = []
+        if self.encoding:
+            encodings.append(self.encoding)
+        else:
+            codepage = instance.codepage
+            if codepage:
+                codepage = f'cp{codepage}'
 
-        encoding = self.encoding or instance.encoding or codepage or 'UTF-8'
+            encoding = instance.encoding or codepage
+            if encoding and encoding.replace('_', '-').upper() not in ('UTF-8', 'UTF8'):
+                encodings.append(encoding)
+            encodings.append('UTF-8')
 
-        try:
-            return value.decode(encoding)
-        except UnicodeDecodeError as ex:
-            raise ValueError(f'{self.name}: cannot decode {value!r} as {encoding}') from ex
+        for encoding in encodings:
+            try:
+                return value.decode(encoding)
+            except UnicodeDecodeError:
+                pass
+
+        raise ValueError(f'{self.name}: cannot decode {value!r} as {" or ".join(encodings)}')
 
 
 class ValidUrl(Validator):
