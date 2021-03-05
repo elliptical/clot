@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
-disable = missing-docstring
+disable = missing-docstring, too-few-public-methods
 
 [BASIC]
 good-names = t,x,y,z,cm

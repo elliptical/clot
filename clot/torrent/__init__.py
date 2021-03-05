@@ -1,11 +1,18 @@
 """This package provides torrent-related functions and classes.
 
-Torrent structure is described at the following address:
-https://wiki.theory.org/index.php/BitTorrentSpecification#Metainfo_File_Structure
+Torrent structure is described at the following addresses:
+
+https://www.bittorrent.org/beps/bep_0003.html
+https://www.bittorrent.org/beps/bep_0027.html
+
+https://wiki.theory.org/BitTorrentSpecification#Metainfo_File_Structure
+https://wiki.theory.org/index.php/Talk:BitTorrentSpecification
+
+http://wiki.bitcomet.com/inside_bitcomet
 """
 
 
-from .backbone import Backbone
+from .metainfo import Metainfo
 
 
 def new():
@@ -13,13 +20,13 @@ def new():
     return parse(b'de')
 
 
-def parse(raw_bytes):
+def parse(raw_bytes, *, fallback_encoding=None):
     """Create a torrent from a bytes-like object."""
-    return Backbone(raw_bytes)
+    return Metainfo(raw_bytes, fallback_encoding=fallback_encoding)
 
 
-def load(file_path):
+def load(file_path, *, fallback_encoding=None):
     """Create a torrent from a file specified by the path-like object."""
     with open(file_path, 'rb') as readable:
         raw_bytes = readable.read()
-    return Backbone(raw_bytes, file_path)
+    return Metainfo(raw_bytes, file_path, fallback_encoding=fallback_encoding)

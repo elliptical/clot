@@ -6,12 +6,6 @@ from clot import torrent
 
 
 class CreateTestCase(tcm.TestCase):
-    def test_new_torrent_has_expected_values(self):
-        t = torrent.new()
-        self.assertEqual(t.raw_bytes, b'de')
-        self.assertDictEqual(t.data, {})
-        self.assertIsNone(t.file_path)
-
     @tcm.values(
         (None,  'cannot be decoded'),
         ({},    'cannot be decoded'),
@@ -34,17 +28,6 @@ class CreateTestCase(tcm.TestCase):
         message = outcome.exception.args[0]
         self.assertIn(expected_message, message)
 
-    @tcm.values(
-        (b'de',                 {}),
-        (b'd7:comment2:Hie',    {'comment': b'Hi'}),
-        (b'd7:unknown4:Oopse',  {'unknown': b'Oops'}),
-    )
-    def test_bencoded_dict_is_accepted(self, raw_bytes, expected_dict):
-        t = torrent.parse(raw_bytes)
-        self.assertEqual(t.raw_bytes, raw_bytes)
-        self.assertDictEqual(t.data, expected_dict)
-        self.assertIsNone(t.file_path)
-
 
 class LoadTestCase(tcm.TestCase):
     def test_empty_file_will_raise(self):
@@ -55,7 +38,6 @@ class LoadTestCase(tcm.TestCase):
 
     def test_empty_dict_will_not_raise(self):
         t = torrent.load(self.data('empty_dict.torrent'))
-        self.assertEqual(t.raw_bytes, b'de')
         self.assertDictEqual(t.data, {})
         self.assertTrue(t.file_path.endswith('empty_dict.torrent'))
 

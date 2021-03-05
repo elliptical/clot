@@ -5,7 +5,7 @@ import textwrap
 
 import tcm
 
-from clot import torrent
+from clot import bencode, torrent
 
 
 SOME_BYTES = b'old garbage'
@@ -20,10 +20,9 @@ class SaveAsTestCase(tcm.TestCase):
             self.assertFalse(path.exists(file_path))
 
             t.save_as(file_path)
-            self.assertEqual(t.raw_bytes, b'd2:my5:valuee')
             self.assertEqual(t.file_path, file_path)
             self.assertTrue(path.exists(file_path))
-            self.assertEqual(read_bytes(file_path), t.raw_bytes)
+            self.assertEqual(read_bytes(file_path), b'd2:my5:valuee')
 
     def test_existing_file_will_raise_by_default(self):
         t = torrent.new()
@@ -35,7 +34,6 @@ class SaveAsTestCase(tcm.TestCase):
 
             with self.assertRaises(FileExistsError):
                 t.save_as(file_path)
-            self.assertEqual(t.raw_bytes, b'de')
             self.assertIsNone(t.file_path)
             self.assertEqual(read_bytes(file_path), SOME_BYTES)
 
@@ -48,9 +46,8 @@ class SaveAsTestCase(tcm.TestCase):
             self.assertEqual(read_bytes(file_path), SOME_BYTES)
 
             t.save_as(file_path, overwrite=True)
-            self.assertEqual(t.raw_bytes, b'd2:my5:valuee')
             self.assertEqual(t.file_path, file_path)
-            self.assertEqual(read_bytes(file_path), t.raw_bytes)
+            self.assertEqual(read_bytes(file_path), b'd2:my5:valuee')
 
 
 class SaveTestCase(tcm.TestCase):
@@ -66,8 +63,7 @@ class SaveTestCase(tcm.TestCase):
             t = torrent.load(file_path)
             t.data['my'] = 'modified'
             t.save()
-            self.assertEqual(t.raw_bytes, b'd2:my8:modifiede')
-            self.assertEqual(read_bytes(file_path), t.raw_bytes)
+            self.assertEqual(read_bytes(file_path), b'd2:my8:modifiede')
 
     def test_loaded_file_can_be_saved_elsewhere(self):
         with temp_file_path(contents=b'd2:my5:valuee') as file_path:
@@ -76,9 +72,8 @@ class SaveTestCase(tcm.TestCase):
 
             with temp_file_path() as new_file_path:
                 t.save_as(new_file_path)
-                self.assertEqual(t.raw_bytes, b'd2:my8:modifiede')
                 self.assertEqual(t.file_path, new_file_path)
-                self.assertEqual(read_bytes(new_file_path), t.raw_bytes)
+                self.assertEqual(read_bytes(new_file_path), b'd2:my8:modifiede')
 
             self.assertEqual(read_bytes(file_path), b'd2:my5:valuee')
 
@@ -115,7 +110,6 @@ class DumpTestCase(tcm.TestCase):
             self.assertFalse(path.exists(file_path))
 
             t.dump(file_path)
-            self.assertEqual(t.raw_bytes, b'de')
             self.assertIsNone(t.file_path)
             self.assertTrue(path.exists(file_path))
             self.assertEqual(read_str(file_path), expected_json)
@@ -142,7 +136,6 @@ class DumpTestCase(tcm.TestCase):
             self.assertFalse(path.exists(file_path))
 
             t.dump(file_path, indent=2, sort_keys=True)
-            self.assertEqual(t.raw_bytes, b'de')
             self.assertIsNone(t.file_path)
             self.assertTrue(path.exists(file_path))
             self.assertEqual(read_str(file_path), expected_json)
@@ -158,7 +151,19 @@ class DumpTestCase(tcm.TestCase):
             self.assertFalse(path.exists(file_path))
 
             t.dump(file_path)
-            self.assertEqual(t.raw_bytes, b'de')
+            self.assertIsNone(t.file_path)
+            self.assertTrue(path.exists(file_path))
+            self.assertEqual(read_str(file_path), expected_json)
+
+    def test_creation_date_outputs_as_iso_string(self):
+        raw_bytes = bencode.encode({'creation date': 0})
+        t = torrent.parse(raw_bytes)
+        expected_json = '{"creation date": "1970-01-01 00:00:00+00:00"}'
+
+        with temp_file_path(suffix='.json') as file_path:
+            self.assertFalse(path.exists(file_path))
+
+            t.dump(file_path)
             self.assertIsNone(t.file_path)
             self.assertTrue(path.exists(file_path))
             self.assertEqual(read_str(file_path), expected_json)
