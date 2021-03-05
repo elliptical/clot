@@ -74,16 +74,22 @@ class NonEmpty(Validator):
 class Encoded(Validator):
     """Decodes bytes to a string value using the UTF-8 encoding."""
 
+    def __init__(self, encoding=None, **kwargs):
+        """Initialize self."""
+        self.encoding = encoding
+        super().__init__(**kwargs)
+
     def extract_value(self, instance):
         """Convert bytes to string."""
         value = instance.data[self.key]
         if not isinstance(value, bytes):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {bytes}')
 
+        encoding = self.encoding or 'UTF-8'
         try:
-            return value.decode()
+            return value.decode(encoding)
         except UnicodeDecodeError as ex:
-            raise ValueError(f'{self.name}: cannot decode {value!r} as UTF-8') from ex
+            raise ValueError(f'{self.name}: cannot decode {value!r} as {encoding}') from ex
 
 
 class ValidUrl(Validator):

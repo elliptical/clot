@@ -8,6 +8,8 @@ from clot.torrent.fields import Bytes, Field, Integer, Layout, String, Timestamp
 NOW_TZ_AWARE = datetime.now(tz=timezone.utc)
 NOW_NAIVE = datetime.now()
 
+LETTER_BE = '\N{CYRILLIC CAPITAL LETTER BE}'
+
 
 class Base(metaclass=Layout):
     def __init__(self, **kwargs):
@@ -269,8 +271,8 @@ class IntegerTestCase(tcm.TestCase):
 
 class StringTestCase(tcm.TestCase):
     @tcm.values(
-        (1,                                                     TypeError,     "field: expected 1 to be of type <class 'bytes'>"),
-        ('\N{CYRILLIC CAPITAL LETTER BE}'.encode('cp1251'),     ValueError,    r"field: cannot decode b'\xc1' as UTF-8"),
+        (1,                             TypeError,     "field: expected 1 to be of type <class 'bytes'>"),
+        (LETTER_BE.encode('cp1251'),    ValueError,    r"field: cannot decode b'\xc1' as UTF-8"),
     )
     def test_bad_storage_will_raise_on_load(self, value, exception_type, expected_message):
         class Dummy(Base):
@@ -281,6 +283,19 @@ class StringTestCase(tcm.TestCase):
             _ = dummy.field
         message = outcome.exception.args[0]
         self.assertEqual(message, expected_message)
+
+    def test_explicit_field_encoding_is_used(self):
+        class Dummy(Base):
+            normal_field = String('x')
+            explicit_field = String('y', encoding='ASCII')
+
+        dummy = Dummy(x=LETTER_BE.encode(), y=LETTER_BE.encode())
+        self.assertEqual(dummy.normal_field, LETTER_BE)
+
+        with self.assertRaises(ValueError) as outcome:
+            _ = dummy.explicit_field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, r"explicit_field: cannot decode b'\xd0\x91' as ASCII")
 
 
 class UrlTestCase(tcm.TestCase):

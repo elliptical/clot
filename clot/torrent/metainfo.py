@@ -14,7 +14,7 @@ class Metainfo(Backbone):
     creation_date = Timestamp('creation date')
     comment = String('comment')
     created_by = String('created by')
-    encoding = String('encoding')
+    encoding = String('encoding', encoding='ASCII')
     publisher = String('publisher')
     publisher_url = Url('publisher-url')
     nodes = Field('nodes', list)
