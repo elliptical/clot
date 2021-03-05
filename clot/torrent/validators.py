@@ -150,7 +150,7 @@ class UnixEpoch(Validator):
         # the number of seconds elapsed since 1970-01-01 00:00:00 +0000 (UTC).
         try:
             return datetime.fromtimestamp(value, timezone.utc)
-        except (OverflowError, OSError) as ex:
+        except (OverflowError, OSError, ValueError) as ex:
             raise ValueError(f'{self.name}: cannot convert {value!r} to a timestamp') from ex
 
     def validate(self, value):

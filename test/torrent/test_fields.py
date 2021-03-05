@@ -371,7 +371,7 @@ class UrlTestCase(tcm.TestCase):
 class TimestampTestCase(tcm.TestCase):
     @tcm.values(
         (b'1',              TypeError,      "field: expected b'1' to be of type <class 'int'>"),
-        (100_000_000_000,   ValueError,     'field: cannot convert 100000000000 to a timestamp'),
+        (300_000_000_000,   ValueError,     'field: cannot convert 300000000000 to a timestamp'),
     )
     def test_bad_storage_will_raise_on_load(self, value, exception_type, expected_message):
         class Dummy(Base):
