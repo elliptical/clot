@@ -15,7 +15,15 @@ class Layout(type):
 
         def load_fields(self):
             for field in self._fields:
-                field.load_from(self)
+                field.loaded = False
+
+            for field in self._fields:
+                # The "encoding" and "codepage" fields are indirectly loaded right
+                # before loading the first encoded field.  Prevent them from being
+                # loaded again; otherwise the instance data dictionary will already
+                # have the associated key popped and field values become None.
+                if not field.loaded:
+                    field.load_from(self)
 
         def save_fields(self):
             for field in self._fields:
@@ -42,6 +50,7 @@ class Field(Typed):
     def __init__(self, key, value_type, **kwargs):
         """Initialize self."""
         self.key = key
+        self.loaded = None
         super().__init__(value_type, **kwargs)
 
     def __set_name__(self, owner, name):
@@ -76,6 +85,7 @@ class Field(Typed):
             self.validate(value)
             del instance.data[self.key]
 
+        self.loaded = True
         setattr(instance, self.private_name, value)
         return value
 

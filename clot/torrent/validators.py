@@ -85,7 +85,12 @@ class Encoded(Validator):
         if not isinstance(value, bytes):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {bytes}')
 
-        encoding = self.encoding or 'UTF-8'
+        codepage = instance.codepage
+        if codepage:
+            codepage = f'cp{codepage}'
+
+        encoding = self.encoding or instance.encoding or codepage or 'UTF-8'
+
         try:
             return value.decode(encoding)
         except UnicodeDecodeError as ex:

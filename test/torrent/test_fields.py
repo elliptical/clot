@@ -12,6 +12,9 @@ LETTER_BE = '\N{CYRILLIC CAPITAL LETTER BE}'
 
 
 class Base(metaclass=Layout):
+    codepage = None
+    encoding = None
+
     def __init__(self, **kwargs):
         self.data = kwargs
         super().__init__()
@@ -296,6 +299,43 @@ class StringTestCase(tcm.TestCase):
             _ = dummy.explicit_field
         message = outcome.exception.args[0]
         self.assertEqual(message, r"explicit_field: cannot decode b'\xd0\x91' as ASCII")
+
+    def test_torrent_codepage_is_used(self):
+        class Dummy(Base):
+            codepage = 1251
+            field = String('x')
+
+        dummy = Dummy(x=LETTER_BE.encode('cp1251'))
+        self.assertEqual(dummy.field, LETTER_BE)
+
+    def test_torrent_encoding_is_used(self):
+        class Dummy(Base):
+            encoding = 'cp1251'
+            field = String('x')
+
+        dummy = Dummy(x=LETTER_BE.encode('cp1251'))
+        self.assertEqual(dummy.field, LETTER_BE)
+
+    def test_torrent_encoding_overrides_codepage(self):
+        class Dummy(Base):
+            codepage = 1251
+            encoding = 'cp1252'
+            field = String('x')
+
+        dummy = Dummy(x=LETTER_BE.encode('cp1251'))
+        self.assertNotEqual(dummy.field, LETTER_BE)
+
+    def test_explicit_field_encoding_overrides_torrent_encoding_and_codepage(self):
+        class Dummy(Base):
+            codepage = 1251
+            encoding = 'cp1251'
+            field = String('x', encoding='ASCII')
+
+        dummy = Dummy(x=LETTER_BE.encode('cp1251'))
+        with self.assertRaises(ValueError) as outcome:
+            _ = dummy.field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, r"field: cannot decode b'\xc1' as ASCII")
 
 
 class UrlTestCase(tcm.TestCase):
