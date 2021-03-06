@@ -20,13 +20,13 @@ def new():
     return parse(b'de')
 
 
-def parse(raw_bytes, *, fallback_encoding=None):
+def parse(raw_bytes, **kwargs):
     """Create a torrent from a bytes-like object."""
-    return Metainfo(raw_bytes, fallback_encoding=fallback_encoding)
+    return Metainfo(raw_bytes, **kwargs)
 
 
-def load(file_path, *, fallback_encoding=None):
+def load(file_path, **kwargs):
     """Create a torrent from a file specified by the path-like object."""
     with open(file_path, 'rb') as readable:
         raw_bytes = readable.read()
-    return Metainfo(raw_bytes, file_path, fallback_encoding=fallback_encoding)
+    return Metainfo(raw_bytes, file_path=file_path, **kwargs)

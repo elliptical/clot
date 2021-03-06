@@ -23,12 +23,13 @@ class _JsonEncoder(json.JSONEncoder):
 class Backbone(metaclass=Layout):
     """Torrent file low-level contents."""
 
-    def __init__(self, raw_bytes, file_path=None):
+    def __init__(self, raw_bytes, *, file_path=None, fallback_encoding=None):
         """Initialize self."""
         self.data = bencode.decode(raw_bytes, keytostr=True)
         if not isinstance(self.data, dict):
             raise ValueError(f'expected top-level dictionary instead of {type(self.data)}')
         self.file_path = file_path
+        self.fallback_encoding = fallback_encoding
 
         self.load_fields()  # pylint: disable=no-member
 

@@ -22,7 +22,6 @@ class Metainfo(Backbone):
     private = Integer('private', min_value=0, max_value=1)
     codepage = Integer('codepage', min_value=1)
 
-    def __init__(self, raw_bytes, file_path=None, *, fallback_encoding=None):
+    def __init__(self, raw_bytes, **kwargs):
         """Initialize self."""
-        self.fallback_encoding = fallback_encoding
-        super().__init__(raw_bytes, file_path)
+        super().__init__(raw_bytes, **kwargs)
