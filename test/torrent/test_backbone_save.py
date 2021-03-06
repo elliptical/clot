@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from os import path, remove
 from tempfile import NamedTemporaryFile
 import textwrap
@@ -76,6 +77,16 @@ class SaveTestCase(tcm.TestCase):
                 self.assertEqual(read_bytes(new_file_path), b'd2:my8:modifiede')
 
             self.assertEqual(read_bytes(file_path), b'd2:my5:valuee')
+
+    def test_creation_date_outputs_as_integer(self):
+        t = torrent.new()
+        t.creation_date = datetime(1970, 1, 1, 0, 0, 12, tzinfo=timezone.utc)
+
+        with temp_file_path() as file_path:
+            self.assertFalse(path.exists(file_path))
+
+            t.save_as(file_path)
+            self.assertEqual(read_bytes(file_path), b'd13:creation datei12ee')
 
 
 class DumpTestCase(tcm.TestCase):
