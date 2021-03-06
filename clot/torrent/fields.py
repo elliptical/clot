@@ -4,7 +4,7 @@
 from datetime import datetime
 
 from .layout import Attr
-from .validators import Bounded, Encoded, NonEmpty, Typed, UnixEpoch, ValidUrl
+from .validators import Bounded, Encoded, NonEmpty, Typed, UnixEpoch, ValidUrl, ValidUrlList
 
 
 class Field(Attr, Typed):
@@ -50,5 +50,9 @@ class Timestamp(Field, UnixEpoch, Bounded):
         super().__init__(key, datetime, **kwargs)
 
 
-class Url(String, ValidUrl):
+class Url(Attr, ValidUrl):
     """String field looking like an URL (non-empty scheme and hostname required)."""
+
+
+class UrlList(Attr, ValidUrlList):
+    """List of URLs."""

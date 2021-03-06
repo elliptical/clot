@@ -88,6 +88,21 @@ class SaveTestCase(tcm.TestCase):
             t.save_as(file_path)
             self.assertEqual(read_bytes(file_path), b'd13:creation datei12ee')
 
+    @tcm.values(
+        ([],                                    b'de'),
+        (['http://host-1'],                     b'd8:url-list13:http://host-1e'),
+        (['http://host-1', 'http://host-2'],    b'd8:url-listl13:http://host-113:http://host-2ee'),
+    )
+    def test_url_list_outputs_list_or_single_or_none(self, value, expected_bytes):
+        raw_bytes = bencode.encode({'url-list': value})
+        t = torrent.parse(raw_bytes)
+
+        with temp_file_path() as file_path:
+            self.assertFalse(path.exists(file_path))
+
+            t.save_as(file_path)
+            self.assertEqual(read_bytes(file_path), expected_bytes)
+
 
 class DumpTestCase(tcm.TestCase):
     def test_existing_file_will_raise_by_default(self):
@@ -170,6 +185,23 @@ class DumpTestCase(tcm.TestCase):
         raw_bytes = bencode.encode({'creation date': 0})
         t = torrent.parse(raw_bytes)
         expected_json = '{"creation date": "1970-01-01 00:00:00+00:00"}'
+
+        with temp_file_path(suffix='.json') as file_path:
+            self.assertFalse(path.exists(file_path))
+
+            t.dump(file_path)
+            self.assertIsNone(t.file_path)
+            self.assertTrue(path.exists(file_path))
+            self.assertEqual(read_str(file_path), expected_json)
+
+    @tcm.values(
+        ([],                                    '{}'),
+        (['http://host-1'],                     '{"url-list": "http://host-1"}'),
+        (['http://host-1', 'http://host-2'],    '{"url-list": ["http://host-1", "http://host-2"]}'),
+    )
+    def test_url_list_outputs_list_or_single_or_none(self, value, expected_json):
+        raw_bytes = bencode.encode({'url-list': value})
+        t = torrent.parse(raw_bytes)
 
         with temp_file_path(suffix='.json') as file_path:
             self.assertFalse(path.exists(file_path))

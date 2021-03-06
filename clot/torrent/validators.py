@@ -1,10 +1,12 @@
 """This module implements field type and value validators."""
 
 
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 from .layout import Validator
+from .values import List
 
 
 # pylint: disable=no-member
@@ -93,8 +95,8 @@ class Encoded(Validator):
         raise ValueError(f'{self.name}: cannot decode {value!r} as {" or ".join(encodings)}')
 
 
-class ValidUrl(Validator):
-    """Ensures the value is an URL with non-empty scheme and hostname."""
+class _UrlAware:    # pylint: disable=too-few-public-methods
+    """Mixin class to decode and validate URL strings."""
 
     default_schemes = (
         'https',
@@ -107,8 +109,16 @@ class ValidUrl(Validator):
         self.schemes = list(filter(None, schemes or self.default_schemes))
         super().__init__(**kwargs)
 
-    def validate(self, value):
+    def valid_url(self, value):
         """Raise an exception on nonconforming values."""
+        if isinstance(value, bytes):
+            try:
+                value = value.decode()
+            except UnicodeDecodeError as ex:
+                raise ValueError(f'{self.name}: cannot decode {value!r} as UTF-8') from ex
+        elif not isinstance(value, str):
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {bytes} or {str}')
+
         parsed = urlparse(value)
         if not parsed.scheme.strip():
             raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing scheme)')
@@ -116,7 +126,46 @@ class ValidUrl(Validator):
             raise ValueError(f'{self.name}: the value {value!r} is ill-formed (unexpected scheme)')
         if parsed.hostname is None or not parsed.hostname.strip():
             raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing hostname)')
+        return value
+
+
+class ValidUrl(_UrlAware, Validator):
+    """Ensures the value is an URL with non-empty scheme and hostname."""
+
+    def validate(self, value):
+        """Raise an exception on nonconforming values."""
+        value = self.valid_url(value)
         return super().validate(value)
+
+
+class ValidUrlList(_UrlAware, Validator):
+    """Ensures the value is a (possibly empty) list of URLs."""
+
+    def save_value(self, instance, value):
+        """Save the value to the underlying storage."""
+        if not value:
+            super().delete_value(instance)
+        elif len(value) == 1:
+            super().save_value(instance, value[0])
+        else:
+            super().save_value(instance, list(value))
+
+    def validate(self, value):
+        """Raise an exception on nonconforming values."""
+        if self.__assign_as_is(value):
+            pass
+        elif isinstance(value, (bytes, str)):
+            value = List(self.valid_url, value)
+        elif isinstance(value, Iterable):
+            value = List(self.valid_url, *value)
+        else:
+            raise TypeError(f'{self.name}: expected {value!r} to be of type'
+                            f' {bytes}, {str}, {List}, or an iterable')
+
+        return super().validate(value)
+
+    def __assign_as_is(self, value):
+        return isinstance(value, List) and value.valid_item.__func__ is self.valid_url.__func__
 
 
 class UnixEpoch(Validator):

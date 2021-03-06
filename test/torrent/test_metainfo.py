@@ -61,7 +61,7 @@ class CreateTestCase(tcm.TestCase):
         self.assertEqual(t.publisher, 'torrent creator')
         self.assertEqual(t.publisher_url, 'http://creator.site/and/path')
         self.assertListEqual(t.nodes, [[b'host-a', 123], [b'host-b', 456]])
-        self.assertEqual(t.url_list, [b'http://mirror.com/pub', b'http://another.com/pub'])
+        self.assertListEqual(list(t.url_list), ['http://mirror.com/pub', 'http://another.com/pub'])
         self.assertEqual(t.private, 1)
         self.assertEqual(t.codepage, 437)
 
