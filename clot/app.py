@@ -89,6 +89,9 @@ def _add_file_arguments_to(parser):
                         help='stash torrents with errors in this directory')
     parser.add_argument('--fallback-encoding',
                         help='use this encoding for strings which were not encoded with UTF-8')
+    parser.add_argument('--lazy',
+                        action='store_true',
+                        help='do not load metainfo fields (good for examining broken torrents)')
 
 
 def _add_dump_arguments_to(parser):
@@ -139,7 +142,7 @@ def handle_file(file_path, args):
         print(file_path)
 
     try:
-        obj = torrent.load(file_path, fallback_encoding=args.fallback_encoding)
+        obj = torrent.load(file_path, fallback_encoding=args.fallback_encoding, lazy=args.lazy)
         args.func(file_path, obj, args)
     except (TypeError, ValueError) as ex:
         if args.stash:

@@ -65,6 +65,18 @@ class CreateTestCase(tcm.TestCase):
         self.assertEqual(t.private, 1)
         self.assertEqual(t.codepage, 437)
 
+    def test_fields_can_be_lazy_loaded(self):
+        raw_bytes = bencode.encode({
+            'comment': 'a trivial comment',
+        })
+
+        t = torrent.parse(raw_bytes, lazy=True)
+
+        self.assertDictEqual(t.data, {'comment': b'a trivial comment'})
+        self.assertFalse(hasattr(t, '_comment'))
+        self.assertEqual(t.comment, 'a trivial comment')
+        self.assertTrue(hasattr(t, '_comment'))
+
     def test_fallback_encoding_is_used(self):
         t = torrent.new()
 

@@ -23,7 +23,7 @@ class _JsonEncoder(json.JSONEncoder):
 class Backbone(metaclass=Layout):
     """Torrent file low-level contents."""
 
-    def __init__(self, raw_bytes, *, file_path=None, fallback_encoding=None):
+    def __init__(self, raw_bytes, *, file_path=None, fallback_encoding=None, lazy=None):
         """Initialize self."""
         self.data = bencode.decode(raw_bytes, keytostr=True)
         if not isinstance(self.data, dict):
@@ -31,7 +31,8 @@ class Backbone(metaclass=Layout):
         self.file_path = file_path
         self.fallback_encoding = fallback_encoding
 
-        self.load_fields()  # pylint: disable=no-member
+        if not lazy:
+            self.load_fields()  # pylint: disable=no-member
 
     def save_as(self, file_path, *, overwrite=False):
         """Write the torrent to a file and remember the new path and contents on success."""
