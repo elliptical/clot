@@ -3,7 +3,7 @@
 
 from datetime import datetime
 
-from .validators import Bounded, Encoded, NonEmpty, Typed, UnixEpoch, ValidUrl
+from .validators import Bounded, Encoded, NonEmpty, Typed, UnixEpoch, Validator, ValidUrl
 
 
 class Layout(type):
@@ -11,7 +11,7 @@ class Layout(type):
 
     def __new__(cls, name, bases, mapping):
         """Create the class after expanding the original mapping."""
-        fields = [value for value in mapping.values() if isinstance(value, Field)]
+        fields = [value for value in mapping.values() if isinstance(value, Attr)]
 
         def load_fields(self):
             for field in self._fields:
@@ -44,14 +44,14 @@ class Layout(type):
         return super().__new__(cls, name, bases, mapping)
 
 
-class Field(Typed):
-    """Field with specific type and unrestricted values, including None."""
+class Attr(Validator):
+    """Abstract base class for fields."""
 
-    def __init__(self, key, value_type, **kwargs):
+    def __init__(self, key, **kwargs):
         """Initialize self."""
         self.key = key
         self.loaded = None
-        super().__init__(value_type, **kwargs)
+        super().__init__(**kwargs)
 
     def __set_name__(self, owner, name):
         """Customize the name used to store the field value."""
@@ -102,6 +102,14 @@ class Field(Typed):
                 instance.data[self.key] = value
 
 
+class Field(Attr, Typed):
+    """Field with specific type and unrestricted values, including None."""
+
+    def __init__(self, key, value_type, **kwargs):
+        """Initialize self."""
+        super().__init__(key, value_type=value_type, **kwargs)
+
+
 class Integer(Field, Bounded):
     """Integer field with optional lower and/or upper bounds."""
 
@@ -118,6 +126,9 @@ class Bytes(Field, NonEmpty):
         super().__init__(key, bytes, **kwargs)
 
 
+# pylint: disable=too-many-ancestors
+
+
 class String(Field, Encoded, NonEmpty):
     """String field with nonempty value (stored as bytes)."""
 
@@ -126,7 +137,7 @@ class String(Field, Encoded, NonEmpty):
         super().__init__(key, str, **kwargs)
 
 
-class Url(String, ValidUrl):    # pylint: disable=too-many-ancestors
+class Url(String, ValidUrl):
     """String field looking like an URL (non-empty scheme and hostname required)."""
 
 
