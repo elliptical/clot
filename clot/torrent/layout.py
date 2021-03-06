@@ -57,7 +57,9 @@ class Attr(Validator):
         try:
             return getattr(instance, self.private_name)
         except AttributeError:
-            return self.load_from(instance)
+            pass
+
+        return self.load_from(instance)
 
     def __set__(self, instance, value):
         """Set the field value in the specified instance."""
