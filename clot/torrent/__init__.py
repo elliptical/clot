@@ -3,6 +3,7 @@
 Torrent structure is described at the following addresses:
 
 https://www.bittorrent.org/beps/bep_0003.html
+https://www.bittorrent.org/beps/bep_0012.html
 https://www.bittorrent.org/beps/bep_0027.html
 
 https://wiki.theory.org/BitTorrentSpecification#Metainfo_File_Structure

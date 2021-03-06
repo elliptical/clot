@@ -245,3 +245,37 @@ class ValidNodeList(Validator):
             raise ValueError(f'{self.name}: port {port!r} is not within 1-65535')
 
         return f'{host}:{port}'
+
+
+class ValidAnnounceList(_UrlAware, Validator):
+    """List of lists of URLs."""
+
+    def save_value(self, instance, value):
+        """Save the value to the underlying storage."""
+        if not value:
+            super().delete_value(instance)
+        else:
+            super().save_value(instance, list(list(item) for item in value))
+
+    def validate(self, value):
+        """Raise an exception on nonconforming values."""
+        if self.__assign_as_is(value):
+            pass
+        elif isinstance(value, Iterable):
+            value = List(self.valid_tier, *value)
+        else:
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {List}, or an iterable')
+
+        return super().validate(value)
+
+    def __assign_as_is(self, value):
+        return isinstance(value, List) and value.valid_item.__func__ is self.valid_tier.__func__
+
+    def valid_tier(self, value):
+        """Raise an exception on nonconforming values."""
+        if isinstance(value, Iterable):
+            value = List(self.valid_url, *value)
+        else:
+            raise TypeError(f'{self.name}: expected {value!r} to be an iterable')
+
+        return super().validate(value)

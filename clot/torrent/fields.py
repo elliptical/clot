@@ -5,7 +5,7 @@ from datetime import datetime
 
 from .layout import Attr
 from .validators import Bounded, Encoded, NonEmpty, Typed, UnixEpoch
-from .validators import ValidNodeList, ValidUrl, ValidUrlList
+from .validators import ValidAnnounceList, ValidNodeList, ValidUrl, ValidUrlList
 
 
 class Field(Attr, Typed):
@@ -61,3 +61,7 @@ class UrlList(Attr, ValidUrlList):
 
 class NodeList(Attr, ValidNodeList):
     """List of nodes where each node is a host and port pair."""
+
+
+class AnnounceList(Attr, ValidAnnounceList):
+    """List of tiers where each tier is a list of URLs."""

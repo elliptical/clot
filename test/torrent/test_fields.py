@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import tcm
 
-from clot.torrent.fields import Bytes, Field, Integer, NodeList, String, Timestamp, Url, UrlList
+from clot.torrent.fields import AnnounceList, Bytes, Field, Integer, NodeList, String, Timestamp, Url, UrlList
 from clot.torrent.layout import Layout
 
 
@@ -518,3 +518,42 @@ class NodeListTestCase(tcm.TestCase):
 
         del other.x[0]
         self.assertListEqual(list(dummy.x), ['host-b:2'])
+
+
+class AnnounceListTestCase(tcm.TestCase):
+    @tcm.values(
+        (1,         TypeError,    "field: expected 1 to be of type <class 'clot.torrent.values.List'>, or an iterable"),
+        ([2, 3],    TypeError,    'field: expected 2 to be an iterable'),
+    )
+    def test_invalid_input_will_raise_on_load(self, value, exception_type, expected_message):
+        class Dummy(Base):
+            field = AnnounceList('x')
+
+        dummy = Dummy(x=value)
+        with self.assertRaises(exception_type) as outcome:
+            _ = dummy.field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, expected_message)
+
+    def test_lists_are_accepted(self):
+        class Dummy(Base):
+            x = AnnounceList('x')
+            y = AnnounceList('y')
+
+        dummy = Dummy()
+        dummy.x = [[b'http://host-1'], ['http://host-2']]
+        self.assertListEqual(list(list(item) for item in dummy.x), [['http://host-1'], ['http://host-2']])
+
+        # Can assign different field of the same type from the same instance.
+        # No list copy occurs.
+        dummy.y = dummy.x
+        self.assertListEqual(list(list(item) for item in dummy.x), [['http://host-1'], ['http://host-2']])
+        self.assertIs(dummy.y, dummy.x)
+
+        # Same with a field from another instance.
+        other = Dummy()
+        other.x = dummy.x
+        self.assertIs(other.x, dummy.x)
+
+        del other.x[0]
+        self.assertListEqual(list(list(item) for item in dummy.x), [['http://host-2']])

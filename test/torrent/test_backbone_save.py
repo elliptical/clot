@@ -111,6 +111,21 @@ class SaveTestCase(tcm.TestCase):
             t.save_as(file_path)
             self.assertEqual(read_bytes(file_path), expected_bytes)
 
+    @tcm.values(
+        ([],
+            b'de'),
+
+        ([['http://tracker'], ['http://one', 'http://two']],
+            b'd13:announce-listll14:http://trackerel10:http://one10:http://twoeee'),
+    )
+    def test_announce_list_outputs_list_or_none(self, value, expected_bytes):
+        raw_bytes = bencode.encode({'announce-list': value})
+        t = torrent.parse(raw_bytes)
+
+        with temp_file_path() as file_path:
+            t.save_as(file_path)
+            self.assertEqual(read_bytes(file_path), expected_bytes)
+
 
 class DumpTestCase(tcm.TestCase):
     def test_existing_file_will_raise_by_default(self):
@@ -225,6 +240,25 @@ class DumpTestCase(tcm.TestCase):
     )
     def test_node_list_outputs_list_or_none(self, value, expected_json):
         raw_bytes = bencode.encode({'nodes': value})
+        t = torrent.parse(raw_bytes)
+
+        with temp_file_path(suffix='.json') as file_path:
+            self.assertFalse(path.exists(file_path))
+
+            t.dump(file_path)
+            self.assertIsNone(t.file_path)
+            self.assertTrue(path.exists(file_path))
+            self.assertEqual(read_str(file_path), expected_json)
+
+    @tcm.values(
+        ([],
+            '{}'),
+
+        ([['http://tracker'], ['http://one', 'http://two']],
+            '{"announce-list": [["http://tracker"], ["http://one", "http://two"]]}'),
+    )
+    def test_announce_list_outputs_list_or_none(self, value, expected_json):
+        raw_bytes = bencode.encode({'announce-list': value})
         t = torrent.parse(raw_bytes)
 
         with temp_file_path(suffix='.json') as file_path:
