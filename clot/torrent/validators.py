@@ -1,31 +1,13 @@
 """This module implements field type and value validators."""
 
 
-from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
+from .layout import Validator
+
 
 # pylint: disable=no-member
-
-
-class Validator(ABC):
-    """Base class to validate field types and values."""
-
-    def __init__(self, **kwargs):
-        """Initialize self."""
-        # Report unexpected arguments.
-        if kwargs:
-            raise TypeError(f'unexpected arguments: {kwargs}')
-
-    def extract_value(self, instance):
-        """Return the underlying storage value (transform as necessary)."""
-        return instance.data[self.key]
-
-    @abstractmethod
-    def validate(self, value):
-        """Validate the value before assignment."""
-        # Stop the chain of validations calls.
 
 
 class Typed(Validator):

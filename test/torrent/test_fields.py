@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 
 import tcm
 
-from clot.torrent.fields import Bytes, Field, Integer, Layout, String, Timestamp, Url
+from clot.torrent.fields import Bytes, Field, Integer, String, Timestamp, Url
+from clot.torrent.layout import Layout
 
 
 NOW_TZ_AWARE = datetime.now(tz=timezone.utc)
