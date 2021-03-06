@@ -336,6 +336,32 @@ class StringTestCase(tcm.TestCase):
         self.assertEqual(message, r"field: cannot decode b'\xc1' as ASCII")
 
 
+class TimestampTestCase(tcm.TestCase):
+    @tcm.values(
+        (b'1',              TypeError,      "field: expected b'1' to be of type <class 'int'>"),
+        (300_000_000_000,   ValueError,     'field: cannot convert 300000000000 to a timestamp'),
+    )
+    def test_bad_storage_will_raise_on_load(self, value, exception_type, expected_message):
+        class Dummy(Base):
+            field = Timestamp('x')
+
+        dummy = Dummy(x=value)
+        with self.assertRaises(exception_type) as outcome:
+            _ = dummy.field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, expected_message)
+
+    def test_timestamp_requires_tzinfo(self):
+        class Dummy(Base):
+            field = Timestamp('x')
+
+        dummy = Dummy()
+        with self.assertRaises(ValueError) as outcome:
+            dummy.field = NOW_NAIVE
+        message = outcome.exception.args[0]
+        self.assertEqual(message, f'field: the value {NOW_NAIVE!r} is missing timezone info')
+
+
 class UrlTestCase(tcm.TestCase):
     @tcm.values(
         (1,                     None,     TypeError,    "field: expected 1 to be of type <class 'bytes'>"),
@@ -367,29 +393,3 @@ class UrlTestCase(tcm.TestCase):
 
         dummy = Dummy(x=value)
         self.assertEqual(dummy.field, value.decode())
-
-
-class TimestampTestCase(tcm.TestCase):
-    @tcm.values(
-        (b'1',              TypeError,      "field: expected b'1' to be of type <class 'int'>"),
-        (300_000_000_000,   ValueError,     'field: cannot convert 300000000000 to a timestamp'),
-    )
-    def test_bad_storage_will_raise_on_load(self, value, exception_type, expected_message):
-        class Dummy(Base):
-            field = Timestamp('x')
-
-        dummy = Dummy(x=value)
-        with self.assertRaises(exception_type) as outcome:
-            _ = dummy.field
-        message = outcome.exception.args[0]
-        self.assertEqual(message, expected_message)
-
-    def test_timestamp_requires_tzinfo(self):
-        class Dummy(Base):
-            field = Timestamp('x')
-
-        dummy = Dummy()
-        with self.assertRaises(ValueError) as outcome:
-            dummy.field = NOW_NAIVE
-        message = outcome.exception.args[0]
-        self.assertEqual(message, f'field: the value {NOW_NAIVE!r} is missing timezone info')

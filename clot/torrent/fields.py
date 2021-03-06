@@ -42,13 +42,13 @@ class String(Field, Encoded, NonEmpty):
         super().__init__(key, str, **kwargs)
 
 
-class Url(String, ValidUrl):
-    """String field looking like an URL (non-empty scheme and hostname required)."""
-
-
 class Timestamp(Field, UnixEpoch, Bounded):
     """Timestamp field with required timezone info."""
 
     def __init__(self, key, **kwargs):
         """Initialize self."""
         super().__init__(key, datetime, **kwargs)
+
+
+class Url(String, ValidUrl):
+    """String field looking like an URL (non-empty scheme and hostname required)."""
