@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import tcm
 
 from clot import bencode
@@ -29,6 +31,10 @@ class EncodeTestCase(tcm.TestCase):
         # Booleans (encoded as integers)
         (False, b'i0e'),
         (True,  b'i1e'),
+
+        # Timestamps (encoded as Unix epoch integers)
+        (datetime(1970, 1, 1,           tzinfo=timezone.utc),   b'i0e'),
+        (datetime(1970, 1, 1, 0, 0, 12, tzinfo=timezone.utc),   b'i12e'),
 
         # Lists
         ([],                    b'le'),                 # empty list
@@ -96,8 +102,9 @@ class EncodeTestCase(tcm.TestCase):
 
 class EncodeStrictTestCase(tcm.TestCase):
     @tcm.values(
-        (tuple(),   []),
-        (str(),     []),
+        (tuple(),               []),
+        (str(),                 []),
+        (datetime(1970, 1, 1),  []),
     )
     def test_bad_values_will_raise(self, value, expected_locaton):
         with self.assertRaises(TypeError) as outcome:

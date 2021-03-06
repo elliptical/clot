@@ -1,6 +1,7 @@
 """This module lets encode data according to the Bencoding specification."""
 
 
+from datetime import datetime
 import functools
 
 
@@ -76,5 +77,6 @@ def iterencode(value, *, strict=False):     # noqa: C901
     if not strict:
         func.register(str, lambda x: _encode_bytes(x.encode()))
         func.register(tuple, _encode_list)
+        func.register(datetime, lambda x: _encode_int(int(x.timestamp())))
 
     yield from func(value)
