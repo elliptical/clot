@@ -17,8 +17,16 @@ class Validator(ABC):
             raise TypeError(f'unexpected arguments: {kwargs}')
 
     def load_value(self, instance):
-        """Return the underlying storage value (transform as necessary)."""
+        """Return the underlying storage value."""
         return instance.data[self.key]
+
+    def save_value(self, instance, value):
+        """Save the value to the underlying storage."""
+        instance.data[self.key] = value
+
+    def delete_value(self, instance):
+        """Delete the value from the underlying storage."""
+        instance.data.pop(self.key, None)
 
     @abstractmethod
     def validate(self, value):
@@ -65,8 +73,8 @@ class Attr(Validator):
             value = None
         else:
             self.validate(value)
-            del instance.data[self.key]
 
+        self.delete_value(instance)
         self.loaded = True
         setattr(instance, self.private_name, value)
         return value
@@ -79,9 +87,9 @@ class Attr(Validator):
             pass
         else:
             if value is None:
-                instance.data.pop(self.key, None)
+                self.delete_value(instance)
             else:
-                instance.data[self.key] = value
+                self.save_value(instance, value)
 
 
 class Layout(type):

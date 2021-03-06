@@ -63,7 +63,7 @@ class Encoded(Validator):
 
     def load_value(self, instance):
         """Convert bytes to string."""
-        value = instance.data[self.key]
+        value = super().load_value(instance)
         if not isinstance(value, bytes):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {bytes}')
 
@@ -124,7 +124,7 @@ class UnixEpoch(Validator):
 
     def load_value(self, instance):
         """Convert integer to UTC datetime."""
-        value = instance.data[self.key]
+        value = super().load_value(instance)
         if not isinstance(value, int):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {int}')
 
