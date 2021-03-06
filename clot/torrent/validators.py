@@ -22,7 +22,7 @@ class Typed(Validator):
         """Raise an exception on unexpected value type."""
         if not isinstance(value, self.value_type):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {self.value_type}')
-        super().validate(value)
+        return super().validate(value)
 
 
 class Bounded(Validator):
@@ -40,7 +40,7 @@ class Bounded(Validator):
             raise ValueError(f'{self.name}: expected {value} to be at least {self.min_value}')
         if self.max_value is not None and value > self.max_value:
             raise ValueError(f'{self.name}: expected {value} to be at most {self.max_value}')
-        super().validate(value)
+        return super().validate(value)
 
 
 class NonEmpty(Validator):
@@ -50,7 +50,7 @@ class NonEmpty(Validator):
         """Raise an exception if the value consists of whitespace only."""
         if not value.strip():
             raise ValueError(f'{self.name}: empty value is not allowed')
-        super().validate(value)
+        return super().validate(value)
 
 
 class Encoded(Validator):
@@ -116,7 +116,7 @@ class ValidUrl(Validator):
             raise ValueError(f'{self.name}: the value {value!r} is ill-formed (unexpected scheme)')
         if parsed.hostname is None or not parsed.hostname.strip():
             raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing hostname)')
-        super().validate(value)
+        return super().validate(value)
 
 
 class UnixEpoch(Validator):
@@ -139,4 +139,4 @@ class UnixEpoch(Validator):
         """Raise an exception if timezone info is missing."""
         if value.tzinfo is None:
             raise ValueError(f'{self.name}: the value {value!r} is missing timezone info')
-        super().validate(value)
+        return super().validate(value)

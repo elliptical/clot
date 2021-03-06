@@ -31,7 +31,7 @@ class Validator(ABC):
     @abstractmethod
     def validate(self, value):
         """Validate the value before assignment."""
-        # Stop the chain of validations calls.
+        return value
 
 
 class Attr(Validator):
@@ -64,7 +64,7 @@ class Attr(Validator):
     def __set__(self, instance, value):
         """Set the field value in the specified instance."""
         if value is not None:
-            self.validate(value)
+            value = self.validate(value)
         setattr(instance, self.private_name, value)
 
     def load_from(self, instance):
@@ -74,7 +74,7 @@ class Attr(Validator):
         except KeyError:
             value = None
         else:
-            self.validate(value)
+            value = self.validate(value)
 
         self.delete_value(instance)
         self.loaded = True
