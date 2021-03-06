@@ -2,7 +2,7 @@
 
 
 from .backbone import Backbone
-from .fields import Field, Integer, String, Timestamp, Url, UrlList
+from .fields import Field, Integer, NodeList, String, Timestamp, Url, UrlList
 
 
 class Metainfo(Backbone):
@@ -17,7 +17,7 @@ class Metainfo(Backbone):
     encoding = String('encoding', encoding='ASCII')
     publisher = String('publisher')
     publisher_url = Url('publisher-url')
-    nodes = Field('nodes', list)
+    nodes = NodeList('nodes')
     url_list = UrlList('url-list')
     private = Integer('private', min_value=0, max_value=1)
     codepage = Integer('codepage', min_value=1)

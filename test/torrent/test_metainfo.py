@@ -60,7 +60,7 @@ class CreateTestCase(tcm.TestCase):
         self.assertEqual(t.encoding, 'UTF-8')
         self.assertEqual(t.publisher, 'torrent creator')
         self.assertEqual(t.publisher_url, 'http://creator.site/and/path')
-        self.assertListEqual(t.nodes, [[b'host-a', 123], [b'host-b', 456]])
+        self.assertListEqual(list(t.nodes), ['host-a:123', 'host-b:456'])
         self.assertListEqual(list(t.url_list), ['http://mirror.com/pub', 'http://another.com/pub'])
         self.assertEqual(t.private, 1)
         self.assertEqual(t.codepage, 437)

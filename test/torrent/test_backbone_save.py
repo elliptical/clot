@@ -83,8 +83,6 @@ class SaveTestCase(tcm.TestCase):
         t.creation_date = datetime(1970, 1, 1, 0, 0, 12, tzinfo=timezone.utc)
 
         with temp_file_path() as file_path:
-            self.assertFalse(path.exists(file_path))
-
             t.save_as(file_path)
             self.assertEqual(read_bytes(file_path), b'd13:creation datei12ee')
 
@@ -98,8 +96,18 @@ class SaveTestCase(tcm.TestCase):
         t = torrent.parse(raw_bytes)
 
         with temp_file_path() as file_path:
-            self.assertFalse(path.exists(file_path))
+            t.save_as(file_path)
+            self.assertEqual(read_bytes(file_path), expected_bytes)
 
+    @tcm.values(
+        ([],                b'de'),
+        ([['host', 8080]],  b'd5:nodesll4:hosti8080eeee'),
+    )
+    def test_node_list_outputs_list_or_none(self, value, expected_bytes):
+        raw_bytes = bencode.encode({'nodes': value})
+        t = torrent.parse(raw_bytes)
+
+        with temp_file_path() as file_path:
             t.save_as(file_path)
             self.assertEqual(read_bytes(file_path), expected_bytes)
 
@@ -201,6 +209,22 @@ class DumpTestCase(tcm.TestCase):
     )
     def test_url_list_outputs_list_or_single_or_none(self, value, expected_json):
         raw_bytes = bencode.encode({'url-list': value})
+        t = torrent.parse(raw_bytes)
+
+        with temp_file_path(suffix='.json') as file_path:
+            self.assertFalse(path.exists(file_path))
+
+            t.dump(file_path)
+            self.assertIsNone(t.file_path)
+            self.assertTrue(path.exists(file_path))
+            self.assertEqual(read_str(file_path), expected_json)
+
+    @tcm.values(
+        ([],                '{}'),
+        ([['host', 8080]],  '{"nodes": [["host", 8080]]}'),
+    )
+    def test_node_list_outputs_list_or_none(self, value, expected_json):
+        raw_bytes = bencode.encode({'nodes': value})
         t = torrent.parse(raw_bytes)
 
         with temp_file_path(suffix='.json') as file_path:

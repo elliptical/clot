@@ -189,3 +189,59 @@ class UnixEpoch(Validator):
         if value.tzinfo is None:
             raise ValueError(f'{self.name}: the value {value!r} is missing timezone info')
         return super().validate(value)
+
+
+class ValidNodeList(Validator):
+    """A possibly empty list of host and port pairs (represented by two-item lists)."""
+
+    def save_value(self, instance, value):
+        """Save the value to the underlying storage."""
+        if not value:
+            super().delete_value(instance)
+        else:
+            def split(host_port):
+                host, _, port = host_port.rpartition(':')
+                return host, int(port)
+
+            super().save_value(instance, list(split(item) for item in value))
+
+    def validate(self, value):
+        """Raise an exception on nonconforming values."""
+        if self.__assign_as_is(value):
+            pass
+        elif isinstance(value, Iterable):
+            value = List(self.valid_node, *value)
+        else:
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {List}, or an iterable')
+
+        return super().validate(value)
+
+    def __assign_as_is(self, value):
+        return isinstance(value, List) and value.valid_item.__func__ is self.valid_node.__func__
+
+    def valid_node(self, value):
+        """Raise an exception on nonconforming values."""
+        if not isinstance(value, list):
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {list}')
+
+        if len(value) != 2:
+            raise ValueError(f'{self.name}: expected {value!r} to contain exactly 2 items')
+
+        host, port = value
+
+        if isinstance(host, bytes):
+            try:
+                host = host.decode()
+            except UnicodeDecodeError as ex:
+                raise ValueError(f'{self.name}: cannot decode {host!r} as UTF-8') from ex
+        elif not isinstance(host, str):
+            raise TypeError(f'{self.name}: expected {host!r} to be of type {bytes} or {str}')
+        if not host.strip():
+            raise ValueError(f'{self.name}: host {host!r} is empty')
+
+        if not isinstance(port, int):
+            raise TypeError(f'{self.name}: expected {port!r} to be of type {int}')
+        if not 1 <= port <= 65535:
+            raise ValueError(f'{self.name}: port {port!r} is not within 1-65535')
+
+        return f'{host}:{port}'

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import tcm
 
-from clot.torrent.fields import Bytes, Field, Integer, String, Timestamp, Url, UrlList
+from clot.torrent.fields import Bytes, Field, Integer, NodeList, String, Timestamp, Url, UrlList
 from clot.torrent.layout import Layout
 
 
@@ -458,3 +458,63 @@ class UrlListTestCase(tcm.TestCase):
 
         del other.x[0]
         self.assertListEqual(list(dummy.x), ['http://host-2'])
+
+
+class NodeListTestCase(tcm.TestCase):
+    @tcm.values(
+        (1,                     TypeError,  "field: expected 1 to be of type <class 'clot.torrent.values.List'>, or an iterable"),
+        ([2],                   TypeError,  "field: expected 2 to be of type <class 'list'>"),
+        ([['host']],            ValueError, "field: expected ['host'] to contain exactly 2 items"),
+        ([['host', 8080, 0]],   ValueError, "field: expected ['host', 8080, 0] to contain exactly 2 items"),
+        ([[2, 3]],              TypeError,  "field: expected 2 to be of type <class 'bytes'> or <class 'str'>"),
+        ([['',      8080]],     ValueError, "field: host '' is empty"),
+        ([['host',  -1]],       ValueError, 'field: port -1 is not within 1-65535'),
+        ([['host',  0]],        ValueError, 'field: port 0 is not within 1-65535'),
+        ([['host',  65536]],    ValueError, 'field: port 65536 is not within 1-65535'),
+        ([['host', '8080']],    TypeError,  "field: expected '8080' to be of type <class 'int'>"),
+        ([[b'\x80', 8080]],     ValueError, r"field: cannot decode b'\x80' as UTF-8"),
+    )
+    def test_invalid_input_will_raise_on_load(self, value, exception_type, expected_message):
+        class Dummy(Base):
+            field = NodeList('x')
+
+        dummy = Dummy(x=value)
+        with self.assertRaises(exception_type) as outcome:
+            _ = dummy.field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, expected_message)
+
+    @tcm.values(
+        ([],                []),
+        ([['host', 1]],     ['host:1']),
+        ([['host', 65535]], ['host:65535']),
+    )
+    def test_valid_input_is_accepted(self, value, expected_value):
+        class Dummy(Base):
+            field = NodeList('x')
+
+        dummy = Dummy(x=value)
+        self.assertListEqual(list(dummy.field), expected_value)
+
+    def test_lists_are_accepted(self):
+        class Dummy(Base):
+            x = NodeList('x')
+            y = NodeList('y')
+
+        dummy = Dummy()
+        dummy.x = [[b'host-a', 1], ['host-b', 2]]
+        self.assertListEqual(list(dummy.x), ['host-a:1', 'host-b:2'])
+
+        # Can assign different field of the same type from the same instance.
+        # No list copy occurs.
+        dummy.y = dummy.x
+        self.assertListEqual(list(dummy.x), ['host-a:1', 'host-b:2'])
+        self.assertIs(dummy.y, dummy.x)
+
+        # Same with a field from another instance.
+        other = Dummy()
+        other.x = dummy.x
+        self.assertIs(other.x, dummy.x)
+
+        del other.x[0]
+        self.assertListEqual(list(dummy.x), ['host-b:2'])
