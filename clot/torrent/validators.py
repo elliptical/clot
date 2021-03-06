@@ -95,6 +95,29 @@ class Encoded(Validator):
         raise ValueError(f'{self.name}: cannot decode {value!r} as {" or ".join(encodings)}')
 
 
+class UnixEpoch(Validator):
+    """Interprets int as a timestamp in the standard Unix epoch format."""
+
+    def load_value(self, instance):
+        """Convert integer to UTC datetime."""
+        value = super().load_value(instance)
+        if not isinstance(value, int):
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {int}')
+
+        # Interpret the value according to the standard Unix epoch format, which represents
+        # the number of seconds elapsed since 1970-01-01 00:00:00 +0000 (UTC).
+        try:
+            return datetime.fromtimestamp(value, timezone.utc)
+        except (OverflowError, OSError, ValueError) as ex:
+            raise ValueError(f'{self.name}: cannot convert {value!r} to a timestamp') from ex
+
+    def validate(self, value):
+        """Raise an exception if timezone info is missing."""
+        if value.tzinfo is None:
+            raise ValueError(f'{self.name}: the value {value!r} is missing timezone info')
+        return super().validate(value)
+
+
 class _UrlAware:    # pylint: disable=too-few-public-methods
     """Mixin class to decode and validate URL strings."""
 
@@ -166,29 +189,6 @@ class ValidUrlList(_UrlAware, Validator):
 
     def __assign_as_is(self, value):
         return isinstance(value, List) and value.valid_item.__func__ is self.valid_url.__func__
-
-
-class UnixEpoch(Validator):
-    """Interprets int as a timestamp in the standard Unix epoch format."""
-
-    def load_value(self, instance):
-        """Convert integer to UTC datetime."""
-        value = super().load_value(instance)
-        if not isinstance(value, int):
-            raise TypeError(f'{self.name}: expected {value!r} to be of type {int}')
-
-        # Interpret the value according to the standard Unix epoch format, which represents
-        # the number of seconds elapsed since 1970-01-01 00:00:00 +0000 (UTC).
-        try:
-            return datetime.fromtimestamp(value, timezone.utc)
-        except (OverflowError, OSError, ValueError) as ex:
-            raise ValueError(f'{self.name}: cannot convert {value!r} to a timestamp') from ex
-
-    def validate(self, value):
-        """Raise an exception if timezone info is missing."""
-        if value.tzinfo is None:
-            raise ValueError(f'{self.name}: the value {value!r} is missing timezone info')
-        return super().validate(value)
 
 
 class ValidNodeList(Validator):
