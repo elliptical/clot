@@ -61,7 +61,7 @@ class Encoded(Validator):
         self.encoding = encoding
         super().__init__(**kwargs)
 
-    def extract_value(self, instance):
+    def load_value(self, instance):
         """Convert bytes to string."""
         value = instance.data[self.key]
         if not isinstance(value, bytes):
@@ -122,7 +122,7 @@ class ValidUrl(Validator):
 class UnixEpoch(Validator):
     """Interprets int as a timestamp in the standard Unix epoch format."""
 
-    def extract_value(self, instance):
+    def load_value(self, instance):
         """Convert integer to UTC datetime."""
         value = instance.data[self.key]
         if not isinstance(value, int):

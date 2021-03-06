@@ -16,7 +16,7 @@ class Validator(ABC):
         if kwargs:
             raise TypeError(f'unexpected arguments: {kwargs}')
 
-    def extract_value(self, instance):
+    def load_value(self, instance):
         """Return the underlying storage value (transform as necessary)."""
         return instance.data[self.key]
 
@@ -60,7 +60,7 @@ class Attr(Validator):
     def load_from(self, instance):
         """Initialize the field value from the instance data dictionary."""
         try:
-            value = self.extract_value(instance)
+            value = self.load_value(instance)
         except KeyError:
             value = None
         else:
