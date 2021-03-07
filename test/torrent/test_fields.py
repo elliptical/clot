@@ -468,9 +468,8 @@ class NodeListTestCase(tcm.TestCase):
         ([['host', 8080, 0]],   ValueError, "field: expected ['host', 8080, 0] to contain exactly 2 items"),
         ([[2, 3]],              TypeError,  "field: expected 2 to be of type <class 'bytes'> or <class 'str'>"),
         ([['',      8080]],     ValueError, "field: host '' is empty"),
-        ([['host',  -1]],       ValueError, 'field: port -1 is not within 1-65535'),
-        ([['host',  0]],        ValueError, 'field: port 0 is not within 1-65535'),
-        ([['host',  65536]],    ValueError, 'field: port 65536 is not within 1-65535'),
+        ([['host',  -1]],       ValueError, 'field: port -1 is not within 0-65535'),
+        ([['host',  65536]],    ValueError, 'field: port 65536 is not within 0-65535'),
         ([['host', '8080']],    TypeError,  "field: expected '8080' to be of type <class 'int'>"),
         ([[b'\x80', 8080]],     ValueError, r"field: cannot decode b'\x80' as UTF-8"),
     )
@@ -486,6 +485,7 @@ class NodeListTestCase(tcm.TestCase):
 
     @tcm.values(
         ([],                []),
+        ([['host', 0]],     ['host:0']),
         ([['host', 1]],     ['host:1']),
         ([['host', 65535]], ['host:65535']),
     )

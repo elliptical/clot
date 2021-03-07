@@ -241,8 +241,8 @@ class ValidNodeList(Validator):
 
         if not isinstance(port, int):
             raise TypeError(f'{self.name}: expected {port!r} to be of type {int}')
-        if not 1 <= port <= 65535:
-            raise ValueError(f'{self.name}: port {port!r} is not within 1-65535')
+        if not 0 <= port <= 65535:
+            raise ValueError(f'{self.name}: port {port!r} is not within 0-65535')
 
         return f'{host}:{port}'
 
