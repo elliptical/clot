@@ -10,7 +10,9 @@ class List(MutableSequence):    # pylint: disable=too-many-ancestors
     def __init__(self, valid_item, *values):
         """Initialize self."""
         self.valid_item = valid_item
-        self.data = [self.valid_item(value) for value in values]
+        filtered_values = (value for value in values if value is not None)
+        valid_values = (self.valid_item(value) for value in filtered_values)
+        self.data = list(value for value in valid_values if value is not None)
 
     def __repr__(self):
         """Return repr(self)."""

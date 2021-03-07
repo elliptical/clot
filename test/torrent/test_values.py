@@ -25,6 +25,23 @@ class TestCase(tcm.TestCase):
         self.assertEqual(repr(x), 'List([3, 1, 2])')
         self.assertTupleEqual(tuple(x), (3, 1, 2))
 
+    def test_list_will_skip_none_values_upon_creation(self):
+        x = List(self.valid_item, 1, None, 2)
+        self.assertListEqual(list(x), [1, 2])
+
+        def valid_even(value):
+            return None if value % 2 else value
+
+        x = List(valid_even, 1, 2, 3, 4, 5)
+        self.assertListEqual(list(x), [2, 4])
+
+    def test_list_will_not_skip_empty_values_upon_creation(self):
+        def any_item(value):
+            return value
+
+        x = List(any_item, '1', None, '', '2', 0)
+        self.assertListEqual(list(x), ['1', '', '2', 0])
+
     def test_list_can_grow(self):
         x = List(self.valid_item)
 
