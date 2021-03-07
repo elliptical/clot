@@ -31,7 +31,7 @@ class CreateTestCase(tcm.TestCase):
         raw_bytes = bencode.encode({
             'info': {},
             'announce': 'http://tracker/announce',
-            'announce-list': [['tracker'], ['backup1'], ['backup2']],
+            'announce-list': [['http://tracker'], ['http://backup1'], ['http://backup2']],
             'creation date': 0,
             'comment': 'a trivial comment',
             'created by': 'clot/0.0.0',
@@ -53,15 +53,15 @@ class CreateTestCase(tcm.TestCase):
 
         self.assertDictEqual(t.info, {})
         self.assertEqual(t.announce, 'http://tracker/announce')
-        self.assertListEqual(t.announce_list, [[b'tracker'], [b'backup1'], [b'backup2']])
+        self.assertListEqual(list(list(x) for x in t.announce_list), [['http://tracker'], ['http://backup1'], ['http://backup2']])
         self.assertEqual(t.creation_date.isoformat(), '1970-01-01T00:00:00+00:00')
         self.assertEqual(t.comment, 'a trivial comment')
         self.assertEqual(t.created_by, 'clot/0.0.0')
         self.assertEqual(t.encoding, 'UTF-8')
         self.assertEqual(t.publisher, 'torrent creator')
         self.assertEqual(t.publisher_url, 'http://creator.site/and/path')
-        self.assertListEqual(t.nodes, [[b'host-a', 123], [b'host-b', 456]])
-        self.assertEqual(t.url_list, [b'http://mirror.com/pub', b'http://another.com/pub'])
+        self.assertListEqual(list(t.nodes), ['host-a:123', 'host-b:456'])
+        self.assertListEqual(list(t.url_list), ['http://mirror.com/pub', 'http://another.com/pub'])
         self.assertEqual(t.private, 1)
         self.assertEqual(t.codepage, 437)
 

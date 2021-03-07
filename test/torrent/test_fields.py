@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 
 import tcm
 
-from clot.torrent.fields import Bytes, Field, Integer, Layout, String, Timestamp, Url
+from clot.torrent.fields import AnnounceList, Bytes, Field, Integer, NodeList, String, Timestamp, Url, UrlList
+from clot.torrent.layout import Layout
 
 
 NOW_TZ_AWARE = datetime.now(tz=timezone.utc)
@@ -178,7 +179,6 @@ class HighLevelTypesTestCase(tcm.TestCase):
         (Integer,   123,                    '123',  'int'),
         (Bytes,     b'123',                 123,    'bytes'),
         (String,    '123',                  123,    'str'),
-        (Url,       'http://example.com',   123,    'str'),
         (Timestamp, NOW_TZ_AWARE,           123,    'datetime.datetime'),
     )
     def test_value_type_is_enforced(self, field_type, good_value, bad_value, expected_type_name):
@@ -198,7 +198,6 @@ class HighLevelTypesTestCase(tcm.TestCase):
     @tcm.values(
         (Bytes,     b'123',                 b'\r \n \t \v \f'),
         (String,    '123',                  '\r \n \t \v \f'),
-        (Url,       'http://example.com',   '\r \n \t \v \f'),
     )
     def test_nonempty_value_is_enforced(self, field_type, good_value, empty_value):
         class Dummy(Base):
@@ -335,9 +334,35 @@ class StringTestCase(tcm.TestCase):
         self.assertEqual(message, r"field: cannot decode b'\xc1' as ASCII")
 
 
+class TimestampTestCase(tcm.TestCase):
+    @tcm.values(
+        (b'1',              TypeError,      "field: expected b'1' to be of type <class 'int'>"),
+        (300_000_000_000,   ValueError,     'field: cannot convert 300000000000 to a timestamp'),
+    )
+    def test_bad_storage_will_raise_on_load(self, value, exception_type, expected_message):
+        class Dummy(Base):
+            field = Timestamp('x')
+
+        dummy = Dummy(x=value)
+        with self.assertRaises(exception_type) as outcome:
+            _ = dummy.field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, expected_message)
+
+    def test_timestamp_requires_tzinfo(self):
+        class Dummy(Base):
+            field = Timestamp('x')
+
+        dummy = Dummy()
+        with self.assertRaises(ValueError) as outcome:
+            dummy.field = NOW_NAIVE
+        message = outcome.exception.args[0]
+        self.assertEqual(message, f'field: the value {NOW_NAIVE!r} is missing timezone info')
+
+
 class UrlTestCase(tcm.TestCase):
     @tcm.values(
-        (1,                     None,     TypeError,    "field: expected 1 to be of type <class 'bytes'>"),
+        (1,                     None,     TypeError,    "field: expected 1 to be of type <class 'bytes'> or <class 'str'>"),
         (b'http2://hostname',   None,     ValueError,   "field: the value 'http2://hostname' is ill-formed (unexpected scheme)"),
         (b'http://hostname',    ['ftp'],  ValueError,   "field: the value 'http://hostname' is ill-formed (unexpected scheme)"),
         (b'hostname',           [],       ValueError,   "field: the value 'hostname' is ill-formed (missing scheme)"),
@@ -367,15 +392,38 @@ class UrlTestCase(tcm.TestCase):
         dummy = Dummy(x=value)
         self.assertEqual(dummy.field, value.decode())
 
-
-class TimestampTestCase(tcm.TestCase):
     @tcm.values(
-        (b'1',              TypeError,      "field: expected b'1' to be of type <class 'int'>"),
-        (300_000_000_000,   ValueError,     'field: cannot convert 300000000000 to a timestamp'),
+        '',
+        ' \t ',
     )
-    def test_bad_storage_will_raise_on_load(self, value, exception_type, expected_message):
+    def test_empty_or_whitespace_only_string_is_none(self, value):
         class Dummy(Base):
-            field = Timestamp('x')
+            field = Url('x')
+
+        dummy = Dummy(x=value)
+        self.assertIsNone(dummy.field)
+
+    def test_scheme_can_be_optional(self):
+        class Dummy(Base):
+            field = Url('x', require_scheme=False)
+
+        dummy = Dummy(x='hostname.org')
+        self.assertEqual(dummy.field, 'hostname.org')
+
+
+class UrlListTestCase(tcm.TestCase):
+    @tcm.values(
+        (1,                     TypeError,    "field: expected 1 to be of type <class 'bytes'>, <class 'str'>, "
+                                              "<class 'clot.torrent.values.List'>, or an iterable"),
+        ([2, 3],                TypeError,    "field: expected 2 to be of type <class 'bytes'> or <class 'str'>"),
+        (b'http2://hostname',   ValueError,   "field: the value 'http2://hostname' is ill-formed (unexpected scheme)"),
+        (b'hostname',           ValueError,   "field: the value 'hostname' is ill-formed (missing scheme)"),
+        (b'http://:20',         ValueError,   "field: the value 'http://:20' is ill-formed (missing hostname)"),
+        (b'\x80',               ValueError,   r"field: cannot decode b'\x80' as UTF-8"),
+    )
+    def test_invalid_input_will_raise_on_load(self, value, exception_type, expected_message):
+        class Dummy(Base):
+            field = UrlList('x')
 
         dummy = Dummy(x=value)
         with self.assertRaises(exception_type) as outcome:
@@ -383,12 +431,153 @@ class TimestampTestCase(tcm.TestCase):
         message = outcome.exception.args[0]
         self.assertEqual(message, expected_message)
 
-    def test_timestamp_requires_tzinfo(self):
+    @tcm.values(
+        (b'ftp://hostname',         ['ftp']),
+        (b'https://hostname',       None),
+    )
+    def test_valid_bytes_is_accepted(self, value, schemes):
         class Dummy(Base):
-            field = Timestamp('x')
+            field = UrlList('x', schemes=schemes)
+
+        dummy = Dummy(x=value)
+        self.assertListEqual(list(dummy.field), [value.decode()])
+
+    @tcm.values(
+        ('ftp://hostname',         ['ftp']),
+        ('https://hostname',       None),
+    )
+    def test_valid_string_is_accepted(self, value, schemes):
+        class Dummy(Base):
+            field = UrlList('x', schemes=schemes)
+
+        dummy = Dummy(x=value)
+        self.assertListEqual(list(dummy.field), [value])
+
+    def test_empty_value_is_ignored(self):
+        class Dummy(Base):
+            x = UrlList('x')
+
+        dummy = Dummy(x=[b'http://host-1', '', 'http://host-2', b''])
+        self.assertListEqual(list(dummy.x), ['http://host-1', 'http://host-2'])
+
+    def test_lists_are_accepted(self):
+        class Dummy(Base):
+            x = UrlList('x')
+            y = UrlList('y')
 
         dummy = Dummy()
-        with self.assertRaises(ValueError) as outcome:
-            dummy.field = NOW_NAIVE
+        dummy.x = [b'http://host-1', 'http://host-2']
+        self.assertListEqual(list(dummy.x), ['http://host-1', 'http://host-2'])
+
+        # Can assign different field of the same type from the same instance.
+        # No list copy occurs.
+        dummy.y = dummy.x
+        self.assertListEqual(list(dummy.x), ['http://host-1', 'http://host-2'])
+        self.assertIs(dummy.y, dummy.x)
+
+        # Same with a field from another instance.
+        other = Dummy()
+        other.x = dummy.x
+        self.assertIs(other.x, dummy.x)
+
+        del other.x[0]
+        self.assertListEqual(list(dummy.x), ['http://host-2'])
+
+
+class NodeListTestCase(tcm.TestCase):
+    @tcm.values(
+        (1,                     TypeError,  "field: expected 1 to be of type <class 'clot.torrent.values.List'>, or an iterable"),
+        ([2],                   TypeError,  "field: expected 2 to be of type <class 'list'>"),
+        ([['host']],            ValueError, "field: expected ['host'] to contain exactly 2 items"),
+        ([['host', 8080, 0]],   ValueError, "field: expected ['host', 8080, 0] to contain exactly 2 items"),
+        ([[2, 3]],              TypeError,  "field: expected 2 to be of type <class 'bytes'> or <class 'str'>"),
+        ([['',      8080]],     ValueError, "field: host '' is empty"),
+        ([['host',  -1]],       ValueError, 'field: port -1 is not within 0-65535'),
+        ([['host',  65536]],    ValueError, 'field: port 65536 is not within 0-65535'),
+        ([['host', '8080']],    TypeError,  "field: expected '8080' to be of type <class 'int'>"),
+        ([[b'\x80', 8080]],     ValueError, r"field: cannot decode b'\x80' as UTF-8"),
+    )
+    def test_invalid_input_will_raise_on_load(self, value, exception_type, expected_message):
+        class Dummy(Base):
+            field = NodeList('x')
+
+        dummy = Dummy(x=value)
+        with self.assertRaises(exception_type) as outcome:
+            _ = dummy.field
         message = outcome.exception.args[0]
-        self.assertEqual(message, f'field: the value {NOW_NAIVE!r} is missing timezone info')
+        self.assertEqual(message, expected_message)
+
+    @tcm.values(
+        ([],                []),
+        ([['host', 0]],     ['host:0']),
+        ([['host', 1]],     ['host:1']),
+        ([['host', 65535]], ['host:65535']),
+    )
+    def test_valid_input_is_accepted(self, value, expected_value):
+        class Dummy(Base):
+            field = NodeList('x')
+
+        dummy = Dummy(x=value)
+        self.assertListEqual(list(dummy.field), expected_value)
+
+    def test_lists_are_accepted(self):
+        class Dummy(Base):
+            x = NodeList('x')
+            y = NodeList('y')
+
+        dummy = Dummy()
+        dummy.x = [[b'host-a', 1], ['host-b', 2]]
+        self.assertListEqual(list(dummy.x), ['host-a:1', 'host-b:2'])
+
+        # Can assign different field of the same type from the same instance.
+        # No list copy occurs.
+        dummy.y = dummy.x
+        self.assertListEqual(list(dummy.x), ['host-a:1', 'host-b:2'])
+        self.assertIs(dummy.y, dummy.x)
+
+        # Same with a field from another instance.
+        other = Dummy()
+        other.x = dummy.x
+        self.assertIs(other.x, dummy.x)
+
+        del other.x[0]
+        self.assertListEqual(list(dummy.x), ['host-b:2'])
+
+
+class AnnounceListTestCase(tcm.TestCase):
+    @tcm.values(
+        (1,         TypeError,    "field: expected 1 to be of type <class 'clot.torrent.values.List'>, or an iterable"),
+        ([2, 3],    TypeError,    'field: expected 2 to be an iterable'),
+    )
+    def test_invalid_input_will_raise_on_load(self, value, exception_type, expected_message):
+        class Dummy(Base):
+            field = AnnounceList('x')
+
+        dummy = Dummy(x=value)
+        with self.assertRaises(exception_type) as outcome:
+            _ = dummy.field
+        message = outcome.exception.args[0]
+        self.assertEqual(message, expected_message)
+
+    def test_lists_are_accepted(self):
+        class Dummy(Base):
+            x = AnnounceList('x')
+            y = AnnounceList('y')
+
+        dummy = Dummy()
+        dummy.x = [[b'http://host-1'], ['http://host-2']]
+        self.assertListEqual(list(list(item) for item in dummy.x), [['http://host-1'], ['http://host-2']])
+
+        # Can assign different field of the same type from the same instance.
+        # No list copy occurs.
+        dummy.y = dummy.x
+        self.assertListEqual(list(list(item) for item in dummy.x), [['http://host-1'], ['http://host-2']])
+        self.assertIs(dummy.y, dummy.x)
+
+        # Same with a field from another instance.
+        other = Dummy()
+        other.x = dummy.x
+        self.assertIs(other.x, dummy.x)
+
+        del other.x[0]
+        self.assertListEqual(list(list(item) for item in dummy.x), [['http://host-2']])

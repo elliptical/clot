@@ -4,7 +4,7 @@
 from datetime import datetime
 import json
 
-from .fields import Layout
+from .layout import Layout
 from .. import bencode
 
 

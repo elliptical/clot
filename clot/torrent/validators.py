@@ -1,31 +1,15 @@
 """This module implements field type and value validators."""
 
 
-from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
+from .layout import Validator
+from .values import List
+
 
 # pylint: disable=no-member
-
-
-class Validator(ABC):
-    """Base class to validate field types and values."""
-
-    def __init__(self, **kwargs):
-        """Initialize self."""
-        # Report unexpected arguments.
-        if kwargs:
-            raise TypeError(f'unexpected arguments: {kwargs}')
-
-    def extract_value(self, instance):
-        """Return the underlying storage value (transform as necessary)."""
-        return instance.data[self.key]
-
-    @abstractmethod
-    def validate(self, value):
-        """Validate the value before assignment."""
-        # Stop the chain of validations calls.
 
 
 class Typed(Validator):
@@ -40,7 +24,7 @@ class Typed(Validator):
         """Raise an exception on unexpected value type."""
         if not isinstance(value, self.value_type):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {self.value_type}')
-        super().validate(value)
+        return super().validate(value)
 
 
 class Bounded(Validator):
@@ -58,7 +42,7 @@ class Bounded(Validator):
             raise ValueError(f'{self.name}: expected {value} to be at least {self.min_value}')
         if self.max_value is not None and value > self.max_value:
             raise ValueError(f'{self.name}: expected {value} to be at most {self.max_value}')
-        super().validate(value)
+        return super().validate(value)
 
 
 class NonEmpty(Validator):
@@ -68,7 +52,7 @@ class NonEmpty(Validator):
         """Raise an exception if the value consists of whitespace only."""
         if not value.strip():
             raise ValueError(f'{self.name}: empty value is not allowed')
-        super().validate(value)
+        return super().validate(value)
 
 
 class Encoded(Validator):
@@ -79,9 +63,9 @@ class Encoded(Validator):
         self.encoding = encoding
         super().__init__(**kwargs)
 
-    def extract_value(self, instance):
+    def load_value(self, instance):
         """Convert bytes to string."""
-        value = instance.data[self.key]
+        value = super().load_value(instance)
         if not isinstance(value, bytes):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {bytes}')
 
@@ -111,38 +95,12 @@ class Encoded(Validator):
         raise ValueError(f'{self.name}: cannot decode {value!r} as {" or ".join(encodings)}')
 
 
-class ValidUrl(Validator):
-    """Ensures the value is an URL with non-empty scheme and hostname."""
-
-    default_schemes = (
-        'https',
-        'http',
-        'udp',
-    )
-
-    def __init__(self, schemes=None, **kwargs):
-        """Initialize self."""
-        self.schemes = list(filter(None, schemes or self.default_schemes))
-        super().__init__(**kwargs)
-
-    def validate(self, value):
-        """Raise an exception on nonconforming values."""
-        parsed = urlparse(value)
-        if not parsed.scheme.strip():
-            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing scheme)')
-        if parsed.scheme not in self.schemes:
-            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (unexpected scheme)')
-        if parsed.hostname is None or not parsed.hostname.strip():
-            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing hostname)')
-        super().validate(value)
-
-
 class UnixEpoch(Validator):
     """Interprets int as a timestamp in the standard Unix epoch format."""
 
-    def extract_value(self, instance):
+    def load_value(self, instance):
         """Convert integer to UTC datetime."""
-        value = instance.data[self.key]
+        value = super().load_value(instance)
         if not isinstance(value, int):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {int}')
 
@@ -157,4 +115,180 @@ class UnixEpoch(Validator):
         """Raise an exception if timezone info is missing."""
         if value.tzinfo is None:
             raise ValueError(f'{self.name}: the value {value!r} is missing timezone info')
-        super().validate(value)
+        return super().validate(value)
+
+
+class _UrlAware:    # pylint: disable=too-few-public-methods
+    """Mixin class to decode and validate URL strings."""
+
+    default_schemes = (
+        'https',
+        'http',
+        'udp',
+    )
+
+    def __init__(self, schemes=None, require_scheme=True, **kwargs):
+        """Initialize self."""
+        self.schemes = list(filter(None, schemes or self.default_schemes))
+        self.require_scheme = require_scheme
+        super().__init__(**kwargs)
+
+    def valid_url(self, value):
+        """Raise an exception on nonconforming values."""
+        if isinstance(value, bytes):
+            try:
+                value = value.decode()
+            except UnicodeDecodeError as ex:
+                raise ValueError(f'{self.name}: cannot decode {value!r} as UTF-8') from ex
+        elif not isinstance(value, str):
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {bytes} or {str}')
+
+        value = value.strip()
+        if not value:
+            return None
+
+        parsed = urlparse(value)
+        if not parsed.scheme.strip():
+            hostname = parsed.path
+            if self.require_scheme:
+                raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing scheme)')
+        else:
+            hostname = parsed.hostname
+            if parsed.scheme not in self.schemes:
+                raise ValueError(f'{self.name}: the value {value!r} is ill-formed'
+                                 ' (unexpected scheme)')
+        if hostname is None or not hostname.strip():
+            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing hostname)')
+
+        return value
+
+
+class ValidUrl(_UrlAware, Validator):
+    """Ensures the value is an URL with non-empty scheme and hostname."""
+
+    def validate(self, value):
+        """Raise an exception on nonconforming values."""
+        value = self.valid_url(value)
+        if value is None:
+            return value
+        return super().validate(value)
+
+
+class ValidUrlList(_UrlAware, Validator):
+    """Ensures the value is a (possibly empty) list of URLs."""
+
+    def save_value(self, instance, value):
+        """Save the value to the underlying storage."""
+        if not value:
+            super().delete_value(instance)
+        elif len(value) == 1:
+            super().save_value(instance, value[0])
+        else:
+            super().save_value(instance, list(value))
+
+    def validate(self, value):
+        """Raise an exception on nonconforming values."""
+        if self.__assign_as_is(value):
+            pass
+        elif isinstance(value, (bytes, str)):
+            value = List(self.valid_url, value)
+        elif isinstance(value, Iterable):
+            value = List(self.valid_url, *value)
+        else:
+            raise TypeError(f'{self.name}: expected {value!r} to be of type'
+                            f' {bytes}, {str}, {List}, or an iterable')
+
+        return super().validate(value)
+
+    def __assign_as_is(self, value):
+        return isinstance(value, List) and value.valid_item.__func__ is self.valid_url.__func__
+
+
+class ValidNodeList(Validator):
+    """A possibly empty list of host and port pairs (represented by two-item lists)."""
+
+    def save_value(self, instance, value):
+        """Save the value to the underlying storage."""
+        if not value:
+            super().delete_value(instance)
+        else:
+            def split(host_port):
+                host, _, port = host_port.rpartition(':')
+                return host, int(port)
+
+            super().save_value(instance, list(split(item) for item in value))
+
+    def validate(self, value):
+        """Raise an exception on nonconforming values."""
+        if self.__assign_as_is(value):
+            pass
+        elif isinstance(value, Iterable):
+            value = List(self.valid_node, *value)
+        else:
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {List}, or an iterable')
+
+        return super().validate(value)
+
+    def __assign_as_is(self, value):
+        return isinstance(value, List) and value.valid_item.__func__ is self.valid_node.__func__
+
+    def valid_node(self, value):
+        """Raise an exception on nonconforming values."""
+        if not isinstance(value, list):
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {list}')
+
+        if len(value) != 2:
+            raise ValueError(f'{self.name}: expected {value!r} to contain exactly 2 items')
+
+        host, port = value
+
+        if isinstance(host, bytes):
+            try:
+                host = host.decode()
+            except UnicodeDecodeError as ex:
+                raise ValueError(f'{self.name}: cannot decode {host!r} as UTF-8') from ex
+        elif not isinstance(host, str):
+            raise TypeError(f'{self.name}: expected {host!r} to be of type {bytes} or {str}')
+        if not host.strip():
+            raise ValueError(f'{self.name}: host {host!r} is empty')
+
+        if not isinstance(port, int):
+            raise TypeError(f'{self.name}: expected {port!r} to be of type {int}')
+        if not 0 <= port <= 65535:
+            raise ValueError(f'{self.name}: port {port!r} is not within 0-65535')
+
+        return f'{host}:{port}'
+
+
+class ValidAnnounceList(_UrlAware, Validator):
+    """List of lists of URLs."""
+
+    def save_value(self, instance, value):
+        """Save the value to the underlying storage."""
+        if not value:
+            super().delete_value(instance)
+        else:
+            super().save_value(instance, list(list(item) for item in value))
+
+    def validate(self, value):
+        """Raise an exception on nonconforming values."""
+        if self.__assign_as_is(value):
+            pass
+        elif isinstance(value, Iterable):
+            value = List(self.valid_tier, *value)
+        else:
+            raise TypeError(f'{self.name}: expected {value!r} to be of type {List}, or an iterable')
+
+        return super().validate(value)
+
+    def __assign_as_is(self, value):
+        return isinstance(value, List) and value.valid_item.__func__ is self.valid_tier.__func__
+
+    def valid_tier(self, value):
+        """Raise an exception on nonconforming values."""
+        if isinstance(value, Iterable):
+            value = List(self.valid_url, *value)
+        else:
+            raise TypeError(f'{self.name}: expected {value!r} to be an iterable')
+
+        return super().validate(value)
