@@ -16,7 +16,7 @@ class Metainfo(Backbone):
     created_by = String('created by')
     encoding = String('encoding', encoding='ASCII')
     publisher = String('publisher')
-    publisher_url = Url('publisher-url')
+    publisher_url = Url('publisher-url', require_scheme=False)
     nodes = NodeList('nodes')
     url_list = UrlList('url-list')
     private = Integer('private', min_value=0, max_value=1)

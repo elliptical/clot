@@ -127,9 +127,10 @@ class _UrlAware:    # pylint: disable=too-few-public-methods
         'udp',
     )
 
-    def __init__(self, schemes=None, **kwargs):
+    def __init__(self, schemes=None, require_scheme=True, **kwargs):
         """Initialize self."""
         self.schemes = list(filter(None, schemes or self.default_schemes))
+        self.require_scheme = require_scheme
         super().__init__(**kwargs)
 
     def valid_url(self, value):
@@ -148,11 +149,17 @@ class _UrlAware:    # pylint: disable=too-few-public-methods
 
         parsed = urlparse(value)
         if not parsed.scheme.strip():
-            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing scheme)')
-        if parsed.scheme not in self.schemes:
-            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (unexpected scheme)')
-        if parsed.hostname is None or not parsed.hostname.strip():
+            hostname = parsed.path
+            if self.require_scheme:
+                raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing scheme)')
+        else:
+            hostname = parsed.hostname
+            if parsed.scheme not in self.schemes:
+                raise ValueError(f'{self.name}: the value {value!r} is ill-formed'
+                                 ' (unexpected scheme)')
+        if hostname is None or not hostname.strip():
             raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing hostname)')
+
         return value
 
 

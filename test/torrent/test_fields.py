@@ -403,6 +403,13 @@ class UrlTestCase(tcm.TestCase):
         dummy = Dummy(x=value)
         self.assertIsNone(dummy.field)
 
+    def test_scheme_can_be_optional(self):
+        class Dummy(Base):
+            field = Url('x', require_scheme=False)
+
+        dummy = Dummy(x='hostname.org')
+        self.assertEqual(dummy.field, 'hostname.org')
+
 
 class UrlListTestCase(tcm.TestCase):
     @tcm.values(
