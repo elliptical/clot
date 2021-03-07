@@ -142,6 +142,10 @@ class _UrlAware:    # pylint: disable=too-few-public-methods
         elif not isinstance(value, str):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {bytes} or {str}')
 
+        value = value.strip()
+        if not value:
+            return None
+
         parsed = urlparse(value)
         if not parsed.scheme.strip():
             raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing scheme)')
@@ -158,6 +162,8 @@ class ValidUrl(_UrlAware, Validator):
     def validate(self, value):
         """Raise an exception on nonconforming values."""
         value = self.valid_url(value)
+        if value is None:
+            return value
         return super().validate(value)
 
 

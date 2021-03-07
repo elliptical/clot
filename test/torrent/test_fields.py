@@ -366,7 +366,6 @@ class UrlTestCase(tcm.TestCase):
         (b'http2://hostname',   None,     ValueError,   "field: the value 'http2://hostname' is ill-formed (unexpected scheme)"),
         (b'http://hostname',    ['ftp'],  ValueError,   "field: the value 'http://hostname' is ill-formed (unexpected scheme)"),
         (b'hostname',           [],       ValueError,   "field: the value 'hostname' is ill-formed (missing scheme)"),
-        (b' ',                  [],       ValueError,   "field: the value ' ' is ill-formed (missing scheme)"),
         (b'hostname',           [''],     ValueError,   "field: the value 'hostname' is ill-formed (missing scheme)"),
         (b'http://:20',         None,     ValueError,   "field: the value 'http://:20' is ill-formed (missing hostname)"),
     )
@@ -392,6 +391,17 @@ class UrlTestCase(tcm.TestCase):
 
         dummy = Dummy(x=value)
         self.assertEqual(dummy.field, value.decode())
+
+    @tcm.values(
+        '',
+        ' \t ',
+    )
+    def test_empty_or_whitespace_only_string_is_none(self, value):
+        class Dummy(Base):
+            field = Url('x')
+
+        dummy = Dummy(x=value)
+        self.assertIsNone(dummy.field)
 
 
 class UrlListTestCase(tcm.TestCase):
@@ -435,6 +445,13 @@ class UrlListTestCase(tcm.TestCase):
 
         dummy = Dummy(x=value)
         self.assertListEqual(list(dummy.field), [value])
+
+    def test_empty_value_is_ignored(self):
+        class Dummy(Base):
+            x = UrlList('x')
+
+        dummy = Dummy(x=[b'http://host-1', '', 'http://host-2', b''])
+        self.assertListEqual(list(dummy.x), ['http://host-1', 'http://host-2'])
 
     def test_lists_are_accepted(self):
         class Dummy(Base):
