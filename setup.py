@@ -14,8 +14,8 @@ from setuptools import find_packages, setup
 PACKAGE_NAME = 'clot'
 
 
-if sys.version_info < (3, 6):
-    raise RuntimeError(f'{PACKAGE_NAME} requires Python 3.6 or higher')
+if sys.version_info < (3, 8):
+    raise RuntimeError(f'{PACKAGE_NAME} requires Python 3.8 or higher')
 
 
 def get_readme():
@@ -64,8 +64,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: Implementation :: CPython',
@@ -74,7 +72,7 @@ setup(
         'bencode',
         'torrent',
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     packages=find_packages(),
     zip_safe=True,
 )
