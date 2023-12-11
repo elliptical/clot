@@ -53,8 +53,7 @@ class CreateTestCase(tcm.TestCase):
 
         self.assertDictEqual(t.info, {})
         self.assertEqual(t.announce, 'http://tracker/announce')
-        self.assertListEqual(list(list(x) for x in t.announce_list),    # pylint: disable=not-an-iterable
-                             [['http://tracker'], ['http://backup1'], ['http://backup2']])
+        self.assertListEqual(list(list(x) for x in t.announce_list), [['http://tracker'], ['http://backup1'], ['http://backup2']])
         self.assertEqual(t.creation_date.isoformat(), '1970-01-01T00:00:00+00:00')
         self.assertEqual(t.comment, 'a trivial comment')
         self.assertEqual(t.created_by, 'clot/0.0.0')
