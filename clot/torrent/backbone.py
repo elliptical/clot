@@ -45,7 +45,7 @@ class Backbone(metaclass=Layout):
     def save(self):
         """Write the torrent to the file from which it was previously loaded or saved to."""
         if self.file_path is None:
-            raise Exception('expected a torrent loaded from file')
+            raise ValueError('expected a torrent loaded from file')
 
         self.save_fields()  # pylint: disable=no-member
         raw_bytes = bencode.encode(self.data)

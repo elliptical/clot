@@ -92,7 +92,8 @@ class Encoded(Validator):
             except UnicodeDecodeError:
                 pass
 
-        raise ValueError(f'{self.name}: cannot decode {value!r} as {" or ".join(encodings)}')
+        encodings = ' or '.join(encodings)
+        raise ValueError(f'{self.name}: cannot decode {value!r} as {encodings}')
 
 
 class UnixEpoch(Validator):

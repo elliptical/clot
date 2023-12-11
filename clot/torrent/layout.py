@@ -97,7 +97,7 @@ class Attr(Validator):
 class Layout(type):
     """Metaclass providing methods to load and save all fields at once."""
 
-    def __new__(cls, name, bases, mapping):
+    def __new__(mcs, name, bases, mapping):     # noqa: N804
         """Create the class after expanding the original mapping."""
         fields = [value for value in mapping.values() if isinstance(value, Attr)]
 
@@ -129,4 +129,4 @@ class Layout(type):
 
         mapping.update(new_stuff)
 
-        return super().__new__(cls, name, bases, mapping)
+        return super().__new__(mcs, name, bases, mapping)
