@@ -96,7 +96,7 @@ class Encoded(Validator):
         raise ValueError(f'{self.name}: cannot decode {value!r} as {encodings}')
 
 
-class UnixEpoch(Validator):
+class ValidTimestamp(Validator):
     """Interprets int as a timestamp in the standard Unix epoch format."""
 
     def load_value(self, instance):

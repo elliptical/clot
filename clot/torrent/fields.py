@@ -4,8 +4,8 @@
 from datetime import datetime
 
 from .layout import Attr
-from .validators import Encoded, NonEmpty, UnixEpoch, ValidRange, ValidType
-from .validators import ValidAnnounceList, ValidNodeList, ValidUrl, ValidUrlList
+from .validators import Encoded, NonEmpty, ValidRange, ValidType
+from .validators import ValidAnnounceList, ValidNodeList, ValidTimestamp, ValidUrl, ValidUrlList
 
 
 class Field(Attr, ValidType):
@@ -43,7 +43,7 @@ class String(Field, Encoded, NonEmpty):
         super().__init__(key, str, **kwargs)
 
 
-class Timestamp(Field, UnixEpoch, ValidRange):
+class Timestamp(Field, ValidTimestamp, ValidRange):
     """Timestamp field with required timezone info."""
 
     def __init__(self, key, **kwargs):
