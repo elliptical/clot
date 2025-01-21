@@ -3,7 +3,6 @@
 
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from urllib.parse import urlparse
 
 from .layout import Validator
 from .values import List
@@ -12,7 +11,7 @@ from .values import List
 # pylint: disable=no-member
 
 
-class Typed(Validator):
+class ValidType(Validator):
     """Validates the value being of specific type."""
 
     def __init__(self, value_type, **kwargs):
@@ -27,7 +26,7 @@ class Typed(Validator):
         return super().validate(value)
 
 
-class Bounded(Validator):
+class ValidRange(Validator):
     """Validates the value against the lower and/or upper bounds."""
 
     def __init__(self, min_value=None, max_value=None, **kwargs):
@@ -42,16 +41,6 @@ class Bounded(Validator):
             raise ValueError(f'{self.name}: expected {value} to be at least {self.min_value}')
         if self.max_value is not None and value > self.max_value:
             raise ValueError(f'{self.name}: expected {value} to be at most {self.max_value}')
-        return super().validate(value)
-
-
-class NonEmpty(Validator):
-    """Validates the value being non-empty (not whitespace only)."""
-
-    def validate(self, value):
-        """Raise an exception if the value consists of whitespace only."""
-        if not value.strip():
-            raise ValueError(f'{self.name}: empty value is not allowed')
         return super().validate(value)
 
 
@@ -96,14 +85,22 @@ class Encoded(Validator):
         raise ValueError(f'{self.name}: cannot decode {value!r} as {encodings}')
 
 
-class UnixEpoch(Validator):
+class ValidTimestamp(Validator):
     """Interprets int as a timestamp in the standard Unix epoch format."""
+
+    EPOCH_TIME = datetime.fromtimestamp(0, timezone.utc)
 
     def load_value(self, instance):
         """Convert integer to UTC datetime."""
         value = super().load_value(instance)
         if not isinstance(value, int):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {int}')
+
+        if value < -1:
+            raise ValueError(f'{self.name}: the value {value!r} is before the UNIX epoch')
+
+        if value in (-1, 0):
+            return None
 
         # Interpret the value according to the standard Unix epoch format, which represents
         # the number of seconds elapsed since 1970-01-01 00:00:00 +0000 (UTC).
@@ -116,23 +113,13 @@ class UnixEpoch(Validator):
         """Raise an exception if timezone info is missing."""
         if value.tzinfo is None:
             raise ValueError(f'{self.name}: the value {value!r} is missing timezone info')
+        if value <= self.EPOCH_TIME:
+            raise ValueError(f'{self.name}: the value {value!r} is before the UNIX epoch')
         return super().validate(value)
 
 
 class _UrlAware:    # pylint: disable=too-few-public-methods
     """Mixin class to decode and validate URL strings."""
-
-    default_schemes = (
-        'https',
-        'http',
-        'udp',
-    )
-
-    def __init__(self, schemes=None, require_scheme=True, **kwargs):
-        """Initialize self."""
-        self.schemes = list(filter(None, schemes or self.default_schemes))
-        self.require_scheme = require_scheme
-        super().__init__(**kwargs)
 
     def valid_url(self, value):
         """Raise an exception on nonconforming values."""
@@ -147,19 +134,6 @@ class _UrlAware:    # pylint: disable=too-few-public-methods
         value = value.strip()
         if not value:
             return None
-
-        parsed = urlparse(value)
-        if not parsed.scheme.strip():
-            hostname = parsed.path
-            if self.require_scheme:
-                raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing scheme)')
-        else:
-            hostname = parsed.hostname
-            if parsed.scheme not in self.schemes:
-                raise ValueError(f'{self.name}: the value {value!r} is ill-formed'
-                                 ' (unexpected scheme)')
-        if hostname is None or not hostname.strip():
-            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing hostname)')
 
         return value
 

@@ -4,11 +4,11 @@
 from datetime import datetime
 
 from .layout import Attr
-from .validators import Bounded, Encoded, NonEmpty, Typed, UnixEpoch
-from .validators import ValidAnnounceList, ValidNodeList, ValidUrl, ValidUrlList
+from .validators import Encoded, ValidRange, ValidType
+from .validators import ValidAnnounceList, ValidNodeList, ValidTimestamp, ValidUrl, ValidUrlList
 
 
-class Field(Attr, Typed):
+class Field(Attr, ValidType):
     """Field with specific type and unrestricted values, including None."""
 
     def __init__(self, key, value_type, **kwargs):
@@ -16,7 +16,7 @@ class Field(Attr, Typed):
         super().__init__(key, value_type=value_type, **kwargs)
 
 
-class Integer(Field, Bounded):
+class Integer(Field, ValidRange):
     """Integer field with optional lower and/or upper bounds."""
 
     def __init__(self, key, **kwargs):
@@ -24,7 +24,7 @@ class Integer(Field, Bounded):
         super().__init__(key, int, **kwargs)
 
 
-class Bytes(Field, NonEmpty):
+class Bytes(Field):
     """Bytes field with non-empty value."""
 
     def __init__(self, key, **kwargs):
@@ -32,10 +32,7 @@ class Bytes(Field, NonEmpty):
         super().__init__(key, bytes, **kwargs)
 
 
-# pylint: disable=too-many-ancestors
-
-
-class String(Field, Encoded, NonEmpty):
+class String(Field, Encoded):
     """String field with nonempty value (stored as bytes)."""
 
     def __init__(self, key, **kwargs):
@@ -43,7 +40,7 @@ class String(Field, Encoded, NonEmpty):
         super().__init__(key, str, **kwargs)
 
 
-class Timestamp(Field, UnixEpoch, Bounded):
+class Timestamp(Field, ValidTimestamp):
     """Timestamp field with required timezone info."""
 
     def __init__(self, key, **kwargs):

@@ -4,9 +4,6 @@
 from abc import ABC, abstractmethod
 
 
-# pylint: disable=no-member
-
-
 class Validator(ABC):
     """Base class to validate field types and values."""
 
@@ -15,6 +12,8 @@ class Validator(ABC):
         # Report unexpected arguments.
         if kwargs:
             raise TypeError(f'unexpected arguments: {kwargs}')
+
+    # pylint: disable=no-member
 
     def load_value(self, instance):
         """Return the underlying storage value."""
@@ -74,7 +73,8 @@ class Attr(Validator):
         except KeyError:
             value = None
         else:
-            value = self.validate(value)
+            if value is not None:
+                value = self.validate(value)
 
         self.delete_value(instance)
         self.loaded = True

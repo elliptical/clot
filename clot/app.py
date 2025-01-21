@@ -2,6 +2,9 @@
 
 
 from argparse import ArgumentParser
+import functools
+import itertools
+import multiprocessing
 from os import path, walk
 import shutil
 
@@ -66,6 +69,10 @@ def _add_traversal_arguments_to(parser):
                         action='store_true',
                         help='recurse into subdirectories')
 
+    parser.add_argument('-p', '--parallel',
+                        action='store_true',
+                        help='recurse into subdirectories with multiple workers')
+
     parser.add_argument('--follow-links',
                         action='store_true',
                         help='walk down into symbolic links that resolve to directories')
@@ -120,20 +127,34 @@ def _add_dump_arguments_to(parser):
                         action='store_true',
                         help='overwrite existing files')
 
+    parser.add_argument('--excess-only',
+                        action='store_true',
+                        help='only dump the data not recognized by clot')
+
 
 def traverse_dir(dir_path, args):
     """Traverse the directory (flat or recursive) and handle files with the specified extension."""
     def onerror(ex):
         print(ex)
 
-    for root, dirs, files in walk(dir_path, onerror=onerror, followlinks=args.follow_links):
-        if not args.recurse:
-            dirs.clear()
+    def generators():
+        for root, dirs, files in walk(dir_path, onerror=onerror, followlinks=args.follow_links):
+            if not args.recurse:
+                dirs.clear()
 
-        for name in files:
-            if name.endswith(args.ext):
-                file_path = path.join(root, name)
-                handle_file(file_path, args)
+            dirs[:] = sorted(dirs)
+
+            yield (path.join(root, name) for name in sorted(files) if name.endswith(args.ext))
+
+    targets = itertools.chain.from_iterable(generators())
+
+    on_file_path = functools.partial(handle_file, args=args)
+
+    if args.parallel:
+        with multiprocessing.Pool() as pool:
+            any(pool.imap(on_file_path, targets, chunksize=100))
+    else:
+        any(map(on_file_path, targets))
 
 
 def handle_file(file_path, args):
@@ -170,7 +191,8 @@ def _dump_torrent(file_path, obj, args):
     obj.dump(file_path + '.json',
              indent=args.indent,
              sort_keys=args.sort_keys,
-             overwrite=args.force)
+             overwrite=args.force,
+             excess_only=args.excess_only)
 
 
 if __name__ == '__main__':
