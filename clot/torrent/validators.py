@@ -88,11 +88,16 @@ class Encoded(Validator):
 class ValidTimestamp(Validator):
     """Interprets int as a timestamp in the standard Unix epoch format."""
 
+    EPOCH_TIME = datetime.fromtimestamp(0, timezone.utc)
+
     def load_value(self, instance):
         """Convert integer to UTC datetime."""
         value = super().load_value(instance)
         if not isinstance(value, int):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {int}')
+
+        if value < -1:
+            raise ValueError(f'{self.name}: the value {value!r} is before the UNIX epoch')
 
         if value in (-1, 0):
             return None
@@ -108,6 +113,8 @@ class ValidTimestamp(Validator):
         """Raise an exception if timezone info is missing."""
         if value.tzinfo is None:
             raise ValueError(f'{self.name}: the value {value!r} is missing timezone info')
+        if value <= self.EPOCH_TIME:
+            raise ValueError(f'{self.name}: the value {value!r} is before the UNIX epoch')
         return super().validate(value)
 
 

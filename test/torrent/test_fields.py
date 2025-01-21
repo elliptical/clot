@@ -320,6 +320,7 @@ class TimestampTestCase(tcm.TestCase):
     @tcm.values(
         (b'1',              TypeError,      "field: expected b'1' to be of type <class 'int'>"),
         (300_000_000_000,   ValueError,     'field: cannot convert 300000000000 to a timestamp'),
+        (-2,                ValueError,     'field: the value -2 is before the UNIX epoch'),
     )
     def test_bad_storage_will_raise_on_load(self, value, exception_type, expected_message):
         class Dummy(Base):
@@ -341,6 +342,18 @@ class TimestampTestCase(tcm.TestCase):
 
         dummy = Dummy(x=value)
         self.assertIsNone(dummy.field)
+
+    def test_must_have_positive_seconds_since_epoch(self):
+        class Dummy(Base):
+            field = Timestamp('x')
+
+        dummy = Dummy()
+        dummy.field = datetime(1970, 1, 1, 0, 0, 1, tzinfo=timezone.utc)
+
+        with self.assertRaises(ValueError) as outcome:
+            dummy.field = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        message = outcome.exception.args[0]
+        self.assertIn('is before the UNIX epoch', message)
 
     def test_timestamp_requires_tzinfo(self):
         class Dummy(Base):

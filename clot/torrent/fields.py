@@ -40,7 +40,7 @@ class String(Field, Encoded):
         super().__init__(key, str, **kwargs)
 
 
-class Timestamp(Field, ValidTimestamp, ValidRange):
+class Timestamp(Field, ValidTimestamp):
     """Timestamp field with required timezone info."""
 
     def __init__(self, key, **kwargs):
