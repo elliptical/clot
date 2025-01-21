@@ -27,7 +27,7 @@ class ValidType(Validator):
         return super().validate(value)
 
 
-class Bounded(Validator):
+class ValidRange(Validator):
     """Validates the value against the lower and/or upper bounds."""
 
     def __init__(self, min_value=None, max_value=None, **kwargs):

@@ -4,7 +4,7 @@
 from datetime import datetime
 
 from .layout import Attr
-from .validators import Bounded, Encoded, NonEmpty, UnixEpoch, ValidType
+from .validators import Encoded, NonEmpty, UnixEpoch, ValidRange, ValidType
 from .validators import ValidAnnounceList, ValidNodeList, ValidUrl, ValidUrlList
 
 
@@ -16,7 +16,7 @@ class Field(Attr, ValidType):
         super().__init__(key, value_type=value_type, **kwargs)
 
 
-class Integer(Field, Bounded):
+class Integer(Field, ValidRange):
     """Integer field with optional lower and/or upper bounds."""
 
     def __init__(self, key, **kwargs):
@@ -43,7 +43,7 @@ class String(Field, Encoded, NonEmpty):
         super().__init__(key, str, **kwargs)
 
 
-class Timestamp(Field, UnixEpoch, Bounded):
+class Timestamp(Field, UnixEpoch, ValidRange):
     """Timestamp field with required timezone info."""
 
     def __init__(self, key, **kwargs):
