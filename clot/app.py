@@ -138,7 +138,9 @@ def traverse_dir(dir_path, args):
             if not args.recurse:
                 dirs.clear()
 
-            yield (path.join(root, name) for name in files if name.endswith(args.ext))
+            dirs[:] = sorted(dirs)
+
+            yield (path.join(root, name) for name in sorted(files) if name.endswith(args.ext))
 
     targets = itertools.chain.from_iterable(generators())
 
@@ -146,7 +148,7 @@ def traverse_dir(dir_path, args):
 
     if args.parallel:
         with multiprocessing.Pool() as pool:
-            any(pool.imap_unordered(on_file_path, targets, chunksize=100))
+            any(pool.imap(on_file_path, targets, chunksize=100))
     else:
         any(map(on_file_path, targets))
 
