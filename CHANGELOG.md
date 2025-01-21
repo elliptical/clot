@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Python 3.10` is now supported.
 - `Python 3.11` is now supported.
 - `Python 3.12` is now supported.
+- `Python 3.13` is now supported.
 
 ### Removed
 - `Python 3.6` is no longer supported.
