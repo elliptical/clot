@@ -4,11 +4,11 @@
 from datetime import datetime
 
 from .layout import Attr
-from .validators import Bounded, Encoded, NonEmpty, Typed, UnixEpoch
+from .validators import Bounded, Encoded, NonEmpty, UnixEpoch, ValidType
 from .validators import ValidAnnounceList, ValidNodeList, ValidUrl, ValidUrlList
 
 
-class Field(Attr, Typed):
+class Field(Attr, ValidType):
     """Field with specific type and unrestricted values, including None."""
 
     def __init__(self, key, value_type, **kwargs):

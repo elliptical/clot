@@ -12,7 +12,7 @@ from .values import List
 # pylint: disable=no-member
 
 
-class Typed(Validator):
+class ValidType(Validator):
     """Validates the value being of specific type."""
 
     def __init__(self, value_type, **kwargs):
