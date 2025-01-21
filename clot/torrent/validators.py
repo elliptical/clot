@@ -3,7 +3,6 @@
 
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from urllib.parse import urlparse
 
 from .layout import Validator
 from .values import List
@@ -112,18 +111,6 @@ class ValidTimestamp(Validator):
 class _UrlAware:    # pylint: disable=too-few-public-methods
     """Mixin class to decode and validate URL strings."""
 
-    default_schemes = (
-        'https',
-        'http',
-        'udp',
-    )
-
-    def __init__(self, schemes=None, require_scheme=True, **kwargs):
-        """Initialize self."""
-        self.schemes = list(filter(None, schemes or self.default_schemes))
-        self.require_scheme = require_scheme
-        super().__init__(**kwargs)
-
     def valid_url(self, value):
         """Raise an exception on nonconforming values."""
         if isinstance(value, bytes):
@@ -137,19 +124,6 @@ class _UrlAware:    # pylint: disable=too-few-public-methods
         value = value.strip()
         if not value:
             return None
-
-        parsed = urlparse(value)
-        if not parsed.scheme.strip():
-            hostname = parsed.path
-            if self.require_scheme:
-                raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing scheme)')
-        else:
-            hostname = parsed.hostname
-            if parsed.scheme not in self.schemes:
-                raise ValueError(f'{self.name}: the value {value!r} is ill-formed'
-                                 ' (unexpected scheme)')
-        if hostname is None or not hostname.strip():
-            raise ValueError(f'{self.name}: the value {value!r} is ill-formed (missing hostname)')
 
         return value
 

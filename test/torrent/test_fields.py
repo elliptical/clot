@@ -344,16 +344,11 @@ class TimestampTestCase(tcm.TestCase):
 
 class UrlTestCase(tcm.TestCase):
     @tcm.values(
-        (1,                     None,     TypeError,    "field: expected 1 to be of type <class 'bytes'> or <class 'str'>"),
-        (b'http2://hostname',   None,     ValueError,   "field: the value 'http2://hostname' is ill-formed (unexpected scheme)"),
-        (b'http://hostname',    ['ftp'],  ValueError,   "field: the value 'http://hostname' is ill-formed (unexpected scheme)"),
-        (b'hostname',           [],       ValueError,   "field: the value 'hostname' is ill-formed (missing scheme)"),
-        (b'hostname',           [''],     ValueError,   "field: the value 'hostname' is ill-formed (missing scheme)"),
-        (b'http://:20',         None,     ValueError,   "field: the value 'http://:20' is ill-formed (missing hostname)"),
+        (1,     TypeError,    "field: expected 1 to be of type <class 'bytes'> or <class 'str'>"),
     )
-    def test_malformed_string_will_raise_on_load(self, value, schemes, exception_type, expected_message):
+    def test_malformed_string_will_raise_on_load(self, value, exception_type, expected_message):
         class Dummy(Base):
-            field = Url('x', schemes=schemes)
+            field = Url('x')
 
         dummy = Dummy(x=value)
         with self.assertRaises(exception_type) as outcome:
@@ -362,14 +357,17 @@ class UrlTestCase(tcm.TestCase):
         self.assertEqual(message, expected_message)
 
     @tcm.values(
-        (b'ftp://hostname',         ['ftp']),
-        (b'https://hostname',       None),
-        (b'http://hostname:123',    None),
-        (b'udp://hostname',         None),
+        b'ftp://hostname',
+        b'https://hostname',
+        b'http2://hostname',
+        b'http://hostname:123',
+        b'udp://hostname',
+        b'hostname',
+        b'http://:20',
     )
-    def test_valid_string_is_accepted(self, value, schemes):
+    def test_valid_string_is_accepted(self, value):
         class Dummy(Base):
-            field = Url('x', schemes=schemes)
+            field = Url('x')
 
         dummy = Dummy(x=value)
         self.assertEqual(dummy.field, value.decode())
@@ -385,23 +383,13 @@ class UrlTestCase(tcm.TestCase):
         dummy = Dummy(x=value)
         self.assertIsNone(dummy.field)
 
-    def test_scheme_can_be_optional(self):
-        class Dummy(Base):
-            field = Url('x', require_scheme=False)
-
-        dummy = Dummy(x='hostname.org')
-        self.assertEqual(dummy.field, 'hostname.org')
-
 
 class UrlListTestCase(tcm.TestCase):
     @tcm.values(
-        (1,                     TypeError,    "field: expected 1 to be of type <class 'bytes'>, <class 'str'>, "
-                                              "<class 'clot.torrent.values.List'>, or an iterable"),
-        ([2, 3],                TypeError,    "field: expected 2 to be of type <class 'bytes'> or <class 'str'>"),
-        (b'http2://hostname',   ValueError,   "field: the value 'http2://hostname' is ill-formed (unexpected scheme)"),
-        (b'hostname',           ValueError,   "field: the value 'hostname' is ill-formed (missing scheme)"),
-        (b'http://:20',         ValueError,   "field: the value 'http://:20' is ill-formed (missing hostname)"),
-        (b'\x80',               ValueError,   r"field: cannot decode b'\x80' as UTF-8"),
+        (1,         TypeError,      "field: expected 1 to be of type <class 'bytes'>, <class 'str'>, "
+                                    "<class 'clot.torrent.values.List'>, or an iterable"),
+        ([2, 3],    TypeError,      "field: expected 2 to be of type <class 'bytes'> or <class 'str'>"),
+        (b'\x80',   ValueError,     r"field: cannot decode b'\x80' as UTF-8"),
     )
     def test_invalid_input_will_raise_on_load(self, value, exception_type, expected_message):
         class Dummy(Base):
@@ -414,23 +402,26 @@ class UrlListTestCase(tcm.TestCase):
         self.assertEqual(message, expected_message)
 
     @tcm.values(
-        (b'ftp://hostname',         ['ftp']),
-        (b'https://hostname',       None),
+        b'ftp://hostname',
+        b'https://hostname',
+        b'http2://hostname',
+        b'hostname',
+        b'http://:20',
     )
-    def test_valid_bytes_is_accepted(self, value, schemes):
+    def test_valid_bytes_is_accepted(self, value):
         class Dummy(Base):
-            field = UrlList('x', schemes=schemes)
+            field = UrlList('x')
 
         dummy = Dummy(x=value)
         self.assertListEqual(list(dummy.field), [value.decode()])
 
     @tcm.values(
-        ('ftp://hostname',         ['ftp']),
-        ('https://hostname',       None),
+        'ftp://hostname',
+        'https://hostname',
     )
-    def test_valid_string_is_accepted(self, value, schemes):
+    def test_valid_string_is_accepted(self, value):
         class Dummy(Base):
-            field = UrlList('x', schemes=schemes)
+            field = UrlList('x')
 
         dummy = Dummy(x=value)
         self.assertListEqual(list(dummy.field), [value])
