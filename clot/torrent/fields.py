@@ -4,7 +4,7 @@
 from datetime import datetime
 
 from .layout import Attr
-from .validators import Encoded, NonEmpty, ValidRange, ValidType
+from .validators import Encoded, ValidRange, ValidType
 from .validators import ValidAnnounceList, ValidNodeList, ValidTimestamp, ValidUrl, ValidUrlList
 
 
@@ -24,7 +24,7 @@ class Integer(Field, ValidRange):
         super().__init__(key, int, **kwargs)
 
 
-class Bytes(Field, NonEmpty):
+class Bytes(Field):
     """Bytes field with non-empty value."""
 
     def __init__(self, key, **kwargs):
@@ -35,7 +35,7 @@ class Bytes(Field, NonEmpty):
 # pylint: disable=too-many-ancestors
 
 
-class String(Field, Encoded, NonEmpty):
+class String(Field, Encoded):
     """String field with nonempty value (stored as bytes)."""
 
     def __init__(self, key, **kwargs):

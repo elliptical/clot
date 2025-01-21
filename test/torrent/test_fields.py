@@ -195,24 +195,6 @@ class HighLevelTypesTestCase(tcm.TestCase):
         self.assertIn(f"of type <class '{expected_type_name}'>", message)
         self.assertEqual(dummy.field, good_value)
 
-    @tcm.values(
-        (Bytes,     b'123',                 b'\r \n \t \v \f'),
-        (String,    '123',                  '\r \n \t \v \f'),
-    )
-    def test_nonempty_value_is_enforced(self, field_type, good_value, empty_value):
-        class Dummy(Base):
-            field = field_type('x')
-
-        dummy = Dummy()
-        dummy.field = good_value
-        self.assertEqual(dummy.field, good_value)
-
-        with self.assertRaises(ValueError) as outcome:
-            dummy.field = empty_value
-        message = outcome.exception.args[0]
-        self.assertIn('empty value is not allowed', message)
-        self.assertEqual(dummy.field, good_value)
-
 
 class IntegerTestCase(tcm.TestCase):
     def test_value_type_is_enforced(self):

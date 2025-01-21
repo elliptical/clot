@@ -45,16 +45,6 @@ class ValidRange(Validator):
         return super().validate(value)
 
 
-class NonEmpty(Validator):
-    """Validates the value being non-empty (not whitespace only)."""
-
-    def validate(self, value):
-        """Raise an exception if the value consists of whitespace only."""
-        if not value.strip():
-            raise ValueError(f'{self.name}: empty value is not allowed')
-        return super().validate(value)
-
-
 class Encoded(Validator):
     """Decodes bytes to a string value using the UTF-8 encoding."""
 
