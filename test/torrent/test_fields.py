@@ -331,6 +331,17 @@ class TimestampTestCase(tcm.TestCase):
         message = outcome.exception.args[0]
         self.assertEqual(message, expected_message)
 
+    @tcm.values(
+        -1,
+        0,
+    )
+    def test_minus_one_and_zero_treated_as_none(self, value):
+        class Dummy(Base):
+            field = Timestamp('x')
+
+        dummy = Dummy(x=value)
+        self.assertIsNone(dummy.field)
+
     def test_timestamp_requires_tzinfo(self):
         class Dummy(Base):
             field = Timestamp('x')

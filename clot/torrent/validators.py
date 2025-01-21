@@ -94,6 +94,9 @@ class ValidTimestamp(Validator):
         if not isinstance(value, int):
             raise TypeError(f'{self.name}: expected {value!r} to be of type {int}')
 
+        if value in (-1, 0):
+            return None
+
         # Interpret the value according to the standard Unix epoch format, which represents
         # the number of seconds elapsed since 1970-01-01 00:00:00 +0000 (UTC).
         try:

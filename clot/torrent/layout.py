@@ -73,7 +73,8 @@ class Attr(Validator):
         except KeyError:
             value = None
         else:
-            value = self.validate(value)
+            if value is not None:
+                value = self.validate(value)
 
         self.delete_value(instance)
         self.loaded = True
