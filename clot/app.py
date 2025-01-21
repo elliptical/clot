@@ -127,6 +127,10 @@ def _add_dump_arguments_to(parser):
                         action='store_true',
                         help='overwrite existing files')
 
+    parser.add_argument('--excess-only',
+                        action='store_true',
+                        help='only dump the data not recognized by clot')
+
 
 def traverse_dir(dir_path, args):
     """Traverse the directory (flat or recursive) and handle files with the specified extension."""
@@ -187,7 +191,8 @@ def _dump_torrent(file_path, obj, args):
     obj.dump(file_path + '.json',
              indent=args.indent,
              sort_keys=args.sort_keys,
-             overwrite=args.force)
+             overwrite=args.force,
+             excess_only=args.excess_only)
 
 
 if __name__ == '__main__':

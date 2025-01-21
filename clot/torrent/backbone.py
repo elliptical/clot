@@ -52,9 +52,17 @@ class Backbone(metaclass=Layout):
         with open(self.file_path, 'wb') as file:
             file.write(raw_bytes)
 
-    def dump(self, file_path, *, indent=None, sort_keys=False, overwrite=False):
+    def dump(self, file_path, *,    # pylint: disable=too-many-arguments
+             indent=None,
+             sort_keys=False,
+             overwrite=False,
+             excess_only=False):
         """Write the torrent to a file in JSON format."""
-        self.save_fields()  # pylint: disable=no-member
+        if excess_only:
+            if not self.data:
+                return
+        else:
+            self.save_fields()  # pylint: disable=no-member
         with open(file_path, 'w' if overwrite else 'x', encoding='utf-8') as file:
             json.dump(self.data, file, cls=_JsonEncoder, ensure_ascii=False,
                       indent=indent, sort_keys=sort_keys)

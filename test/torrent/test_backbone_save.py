@@ -149,6 +149,31 @@ class DumpTestCase(tcm.TestCase):
             t.dump(file_path, overwrite=True)
             self.assertEqual(read_str(file_path), '{}')
 
+    def test_no_excess_data_results_no_write(self):
+        t = torrent.new()
+
+        with temp_file_path(contents=SOME_BYTES) as file_path:
+            self.assertTrue(path.exists(file_path))
+            self.assertEqual(read_bytes(file_path), SOME_BYTES)
+
+            t.dump(file_path, overwrite=True, excess_only=True)
+            self.assertEqual(read_bytes(file_path), SOME_BYTES)
+
+    def test_excess_data_results_write_of_excess_only(self):
+        raw_bytes = bencode.encode({
+            'comment': 'a trivial comment',
+            'unknown to clot': 'stays in data dict',
+        })
+
+        t = torrent.parse(raw_bytes)
+
+        with temp_file_path(contents=SOME_BYTES) as file_path:
+            self.assertTrue(path.exists(file_path))
+            self.assertEqual(read_bytes(file_path), SOME_BYTES)
+
+            t.dump(file_path, overwrite=True, excess_only=True)
+            self.assertEqual(read_bytes(file_path), b'{"unknown to clot": "stays in data dict"}')
+
     def test_default_is_oneline_unsorted(self):
         t = torrent.new()
         t.data['my'] = 'value'
