@@ -4,7 +4,7 @@
 from collections.abc import MutableSequence
 
 
-class List(MutableSequence):    # pylint: disable=too-many-ancestors
+class List(MutableSequence):
     """A list of items satisfiying the constraint passed in."""
 
     def __init__(self, valid_item, *values):

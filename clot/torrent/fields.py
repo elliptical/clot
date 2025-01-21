@@ -32,9 +32,6 @@ class Bytes(Field):
         super().__init__(key, bytes, **kwargs)
 
 
-# pylint: disable=too-many-ancestors
-
-
 class String(Field, Encoded):
     """String field with nonempty value (stored as bytes)."""
 
